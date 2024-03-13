@@ -136,7 +136,7 @@ const UserVerifySignature = sequelize.define(
 
 /** Define Sequelize Model Associations */
 Role.belongsToMany(User, { through: "role_user", foreignKey: "role_id" });
-User.belongsToMany(Role, { through: "role_user", foreignKey: "user_id" });
+User.belongsToMany(Role, { through: "role_user", foreignKey: "user_id", as: "roles" });
 
 User.hasMany(UserVerifySignature, { foreignKey: "user_id" });
 UserVerifySignature.belongsTo(User, { foreignKey: "user_id" });

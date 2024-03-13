@@ -36,6 +36,7 @@ const verifyToken = (token, secretKey) => {
     const payload = jwt.verify(token, secretKey);
     return payload;
   } catch (error) {
+    console.log(error);
     ON_RELEASE || console.log(`Token: ${chalk.red(error.message)}`);
     if (error.message === "jwt expired") {
       throwCriticalError(error, CODE.TOKEN_HAS_BEEN_EXPIRED, MSG.TOKEN_HAS_BEEN_EXPIRED, StatusCodes.UNAUTHORIZED);

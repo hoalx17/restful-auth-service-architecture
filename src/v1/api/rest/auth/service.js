@@ -238,6 +238,26 @@ const signIn = async (username, password) => {
   }
 };
 
+const me = async (username) => {
+  try {
+    /** Find activate user by username (profile not found has been handle at middleware) */
+    const requestUser = await findOneByCondition({ username, activated: true }, User, {
+      include: {
+        model: Role,
+        as: "roles",
+        attributes: ["id", "name"],
+        through: {
+          attributes: [],
+        },
+      },
+    });
+    return requestUser;
+  } catch (error) {
+    ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.GET_PROFILE_INFO_FAILURE, MSG.GET_PROFILE_INFO_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
 module.exports = {
   core: {
     findTargetById,
@@ -254,5 +274,6 @@ module.exports = {
     signUp,
     activate,
     signIn,
+    me,
   },
 };

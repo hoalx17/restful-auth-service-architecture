@@ -5,13 +5,21 @@ const Hashids = require("hashids");
 const { core, auth } = require("./service");
 const { ON_RELEASE } = require("../../../../../constant");
 const { CODE, MSG } = require("./constant");
-const { requestTransform, roleTransform, userTransform } = require("./transform");
+const { requestTransform, roleTransform, userTransform, responseTransform } = require("./transform");
 const { Role } = require("./model");
 const {
   roleSchema: { joiRoleCreate, joiRoleUpdate },
 } = require("./schema");
 const { createCriticalError } = require("../../../error");
-const { responseFindById, responseFindManyByCondition, responseSave, responseUpdate, responseRemove, responseSignIn } = require("./response");
+const {
+  responseFindById,
+  responseFindManyByCondition,
+  responseSave,
+  responseUpdate,
+  responseRemove,
+  responseSignIn,
+  responseFindOrigin,
+} = require("./response");
 
 const { HASHIDS_SALT } = process.env;
 
@@ -133,6 +141,18 @@ const signInController = async (req, res, next) => {
   }
 };
 
+const meController = async (req, res, next) => {
+  try {
+    const { username } = req.user;
+    const requestUser = await auth.me(username);
+    const user = responseTransform(requestUser.toJSON());
+    responseFindOrigin(res, user, MSG.GET_PROFILE_INFO_SUCCESS);
+  } catch (error) {
+    ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
+    next(createCriticalError(error, CODE.GET_PROFILE_INFO_FAILURE, MSG.GET_PROFILE_INFO_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR));
+  }
+};
+
 module.exports = {
   devController,
   roleController: {
@@ -146,5 +166,6 @@ module.exports = {
     signUpController,
     activateController,
     signInController,
+    meController,
   },
 };

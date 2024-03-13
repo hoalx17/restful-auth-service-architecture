@@ -23,6 +23,7 @@ module.exports = {
     /** Middleware */
     REQUIRED_SIGN_IN_TO_CONTINUE: "ERR_AUTH_MIDDLEWARE_1",
     TOKEN_HAS_BEEN_EXPIRED: "ERR_AUTH_MIDDLEWARE_2",
+    SIGNATURE_NOT_MATCH: "ERR_AUTH_MIDDLEWARE_3",
 
     /** Service */
     QUERY_TARGET_FAILURE: "ERR_AUTH_SERVICE_1",
@@ -77,6 +78,7 @@ module.exports = {
     /** Middleware */
     REQUIRED_SIGN_IN_TO_CONTINUE: "Required sign in to continue!",
     TOKEN_HAS_BEEN_EXPIRED: "Token has been expired!",
+    SIGNATURE_NOT_MATCH: "Signature not match!",
 
     /** Service */
     QUERY_TARGET_FAILURE: "Query resource failure!",
@@ -137,6 +139,7 @@ module.exports = {
     AUTHORIZATION_HEADER_MUST_NOT_EMPTY: "authorization header must not be empty",
     TOKEN_HAS_BEEN_EXPIRED: "token has been expired",
     REQUIRED_SIGN_IN_TO_CONTINUE: "sign in to continue",
+    SIGNATURE_NOT_MATCH: "signature not match",
   },
 
   SCHEMA: {

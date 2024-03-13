@@ -8,6 +8,7 @@ const {
   Constant: { ALLOW_IMAGE_FORMAT, CODE, MSG, ERR },
 } = require("../../../util");
 const { newNormalError } = require("../../../error");
+const middleware = require("./middleware");
 
 const upload = multer({
   fileFilter: (req, file, callback) => {
@@ -41,5 +42,6 @@ router.use("/roles", roleRouter);
 router.post("/sign-up", upload.single("imageUrl"), authController.signUpController);
 router.patch("/activate", authController.activateController);
 router.post("/sign-in", authController.signInController);
+router.get("/me", middleware.requireSignIn, authController.meController);
 
 module.exports = router;
