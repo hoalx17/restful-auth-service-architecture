@@ -321,6 +321,30 @@ const getActivateSessions = async (userId) => {
   }
 };
 
+const deactivate = async (password, userId, hashedPassword) => {
+  try {
+    truthyValidator(
+      ERR.USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY,
+      CODE.USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY,
+      MSG.USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY,
+      password
+    );
+    const isPasswordMatch = await bcrypt.compare(password, hashedPassword);
+    if (!isPasswordMatch) {
+      const error = new Error(ERR.USERNAME_OR_PASSWORD_NOT_MATCH);
+      ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+      throwCriticalError(error, CODE.USERNAME_OR_PASSWORD_NOT_MATCH, MSG.USERNAME_OR_PASSWORD_NOT_MATCH, StatusCodes.BAD_REQUEST);
+    } else {
+      await removeManyByCondition({ user_id: userId }, UserVerifySignature);
+      const old = await updateById(userId, { activated: false }, User);
+      return old;
+    }
+  } catch (error) {
+    ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.DEACTIVATE_FAILURE, MSG.DEACTIVATE_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
 module.exports = {
   core: {
     findTargetById,
@@ -343,5 +367,6 @@ module.exports = {
     signIn,
     me,
     getActivateSessions,
+    deactivate,
   },
 };

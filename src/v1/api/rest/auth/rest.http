@@ -1,7 +1,7 @@
 @HOST = http://localhost:3000/api/v1/auth
 @NOW = {{$datetime iso8601}}
-@ACCESS_TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImhvYWx4MTciLCJpYXQiOjE3MTAzMDg3MjYsImV4cCI6MTcxMDMxMjMyNn0.3uYugFqUz80KHThr7_K_sSo2WPc5x2wOPhD9_j4ueX8
-@REFRESH_TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImhvYWx4MTciLCJpYXQiOjE3MTAzMDg3MjYsImV4cCI6MTcxMDM5NTEyNn0.aBocX1p6mROuyEXJNRIde5fNFoRp4n6v5poJtLqJovk
+@ACCESS_TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImhvYWx4MTciLCJpYXQiOjE3MTAzMTIzMjMsImV4cCI6MTcxMDMxNTkyM30.3h_B7EHokGinxB1iDc-S-nKM8PDCNfoB41D65jnMSzY
+@REFRESH_TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImhvYWx4MTciLCJpYXQiOjE3MTAzMTIzMjMsImV4cCI6MTcxMDM5ODcyM30.A97cgF979OZ5TCxCuxj9Lp0EpRFknSo1C-boCKw-qrs
 
 GET {{HOST}}/health-check/ping
 ###
@@ -73,5 +73,14 @@ Authorization: Bearer {{ACCESS_TOKEN}}
 GET {{HOST}}/sessions
 Content-Type: application/json
 Authorization: Bearer {{ACCESS_TOKEN}}
+
+###
+PATCH {{HOST}}/deactivate
+Content-Type: application/json
+Authorization: Bearer {{ACCESS_TOKEN}}
+
+{
+    "password": "hoalx17"
+}
 
 ###

@@ -165,6 +165,18 @@ const getActivateSessionsController = async (req, res, next) => {
   }
 };
 
+const deactivateController = async (req, res, next) => {
+  try {
+    const { password } = req.body;
+    const { id, hashedPassword } = req.user;
+    const old = await auth.deactivate(password, id, hashedPassword);
+    responseUpdate(res, old, MSG.DEACTIVATE_SUCCESS);
+  } catch (error) {
+    ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
+    next(createCriticalError(error, CODE.DEACTIVATE_FAILURE, MSG.DEACTIVATE_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR));
+  }
+};
+
 module.exports = {
   devController,
   roleController: {
@@ -180,5 +192,6 @@ module.exports = {
     signInController,
     meController,
     getActivateSessionsController,
+    deactivateController,
   },
 };

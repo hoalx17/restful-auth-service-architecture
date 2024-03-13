@@ -44,5 +44,6 @@ router.patch("/activate", authController.activateController);
 router.post("/sign-in", authController.signInController);
 router.get("/me", middleware.requireSignIn, authController.meController);
 router.get("/sessions", middleware.requireSignIn, authController.getActivateSessionsController);
+router.patch("/deactivate", middleware.requireSignIn, authController.deactivateController);
 
 module.exports = router;
