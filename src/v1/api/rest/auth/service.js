@@ -16,7 +16,7 @@ const {
 const { ON_RELEASE } = require("../../../../../constant");
 const { CODE, MSG, ERR } = require("./constant");
 const { throwCriticalError } = require("../../../error");
-const { createValidator, updateValidator } = require("./validator");
+const { createValidator, updateValidator, truthyValidator } = require("./validator");
 const { CloudinaryUtils } = require("../../../util");
 const { User, Role } = require("./model");
 const {
@@ -149,6 +149,37 @@ const signUp = async (user, roleId, imageBuffer) => {
   }
 };
 
+const activate = async (username, confirmCode) => {
+  try {
+    truthyValidator(
+      ERR.USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY,
+      CODE.USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY,
+      MSG.USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY,
+      username,
+      confirmCode
+    );
+    /** Find not activate user by username and compare with confirmCode */
+    const requestUser = await findOneByCondition({ username, activated: false }, User);
+    /** Profile has been activated before or profile not found */
+    if (_.isEmpty(requestUser)) {
+      const error = new Error(ERR.PROFILE_NOT_FOUND);
+      ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+      throwCriticalError(error, CODE.PROFILE_NOT_FOUND, MSG.PROFILE_NOT_FOUND, StatusCodes.BAD_REQUEST);
+    } else if (confirmCode !== requestUser.confirmCode) {
+      /** Confirm Code not match */
+      const error = new Error(ERR.CONFIRM_CODE_NOT_MATCH);
+      ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+      throwCriticalError(error, CODE.CONFIRM_CODE_NOT_MATCH, MSG.CONFIRM_CODE_NOT_MATCH, StatusCodes.BAD_REQUEST);
+    } else {
+      const old = await updateById(requestUser.id, { activated: true }, User);
+      return old;
+    }
+  } catch (error) {
+    ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.ACTIVATE_FAILURE, MSG.ACTIVATE_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
 module.exports = {
   core: {
     findTargetById,
@@ -163,5 +194,6 @@ module.exports = {
   },
   auth: {
     signUp,
+    activate,
   },
 };

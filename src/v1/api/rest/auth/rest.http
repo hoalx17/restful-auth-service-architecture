@@ -52,3 +52,5 @@ Content-Type: application/json
 }
 
 ###
+PATCH {{HOST}}/activate?username=hoalx17&confirmCode=21189dd4-5625-44c1-85f8-e99c4e4a0b5a
+Content-Type: application/json

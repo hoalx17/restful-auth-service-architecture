@@ -111,6 +111,17 @@ const signUpController = async (req, res, next) => {
   }
 };
 
+const activateController = async (req, res, next) => {
+  try {
+    const { username, confirmCode } = req.query;
+    const old = await auth.activate(username, confirmCode);
+    responseUpdate(res, old, MSG.ACTIVATE_SUCCESS);
+  } catch (error) {
+    ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
+    next(createCriticalError(error, CODE.ACTIVATE_FAILURE, MSG.ACTIVATE_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR));
+  }
+};
+
 module.exports = {
   devController,
   roleController: {
@@ -122,5 +133,6 @@ module.exports = {
   },
   authController: {
     signUpController,
+    activateController,
   },
 };

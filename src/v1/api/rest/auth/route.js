@@ -39,5 +39,6 @@ router.get("/dev", devController);
 router.use("/roles", roleRouter);
 
 router.post("/sign-up", upload.single("imageUrl"), authController.signUpController);
+router.patch("/activate", authController.activateController);
 
 module.exports = router;
