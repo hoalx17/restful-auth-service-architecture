@@ -188,6 +188,18 @@ const signOutController = async (req, res, next) => {
   }
 };
 
+const removeController = async (req, res, next) => {
+  try {
+    const { password } = req.body;
+    const { id, username, hashedPassword } = req.user;
+    const { removeOn } = await auth.remove(id, username, hashedPassword, password);
+    responseRemove(res, { removeOn }, MSG.DELETE_PROFILE_SUCCESS);
+  } catch (error) {
+    ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
+    next(createCriticalError(error, CODE.DELETE_PROFILE_FAILURE, MSG.DELETE_PROFILE_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR));
+  }
+};
+
 module.exports = {
   devController,
   roleController: {
@@ -205,5 +217,6 @@ module.exports = {
     getActivateSessionsController,
     deactivateController,
     signOutController,
+    removeController,
   },
 };

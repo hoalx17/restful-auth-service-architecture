@@ -4,6 +4,7 @@ const { StatusCodes } = require("http-status-codes");
 const bcrypt = require("bcrypt");
 const ms = require("ms");
 const { Op } = require("sequelize");
+const schedule = require("node-schedule");
 
 const {
   findById,
@@ -35,6 +36,7 @@ const {
   JWT_REFRESH_TOKEN_LIFETIME,
   JWT_REFRESH_TOKEN_SECRET,
   MAX_ALLOW_SESSION,
+  SCHEDULE_DELETE_PROFILE_TIME,
 } = process.env;
 
 /** Core Service */
@@ -299,6 +301,7 @@ const me = async (username) => {
 
 const getActivateSessions = async (userId) => {
   try {
+    /** Profile not found has been handle at middleware */
     const { count, rows } = await findManyTargetByCondition(
       {
         user_id: userId,
@@ -329,6 +332,7 @@ const deactivate = async (password, userId, hashedPassword) => {
       MSG.USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY,
       password
     );
+    /** Profile not found has been handle at middleware */
     const isPasswordMatch = await bcrypt.compare(password, hashedPassword);
     if (!isPasswordMatch) {
       const error = new Error(ERR.USERNAME_OR_PASSWORD_NOT_MATCH);
@@ -347,11 +351,36 @@ const deactivate = async (password, userId, hashedPassword) => {
 
 const signOut = async (userId, accessSignature) => {
   try {
+    /** Profile not found has been handle at middleware */
     const old = await removeManyByCondition({ user_id: userId, access_signature: accessSignature }, UserVerifySignature);
     return old;
   } catch (error) {
     ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
     throwCriticalError(error, CODE.SIGN_OUT_FAILURE, MSG.SIGN_OUT_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
+const remove = async (userId, username, hashedPassword, password) => {
+  try {
+    truthyValidator(ERR.USERNAME_OR_PASSWORD_MUST_NOT_EMPTY, CODE.USERNAME_OR_PASSWORD_MUST_NOT_EMPTY, MSG.USERNAME_OR_PASSWORD_MUST_NOT_EMPTY, password);
+    /** Profile not found has been handle at middleware */
+    const isPasswordMatch = await bcrypt.compare(password, hashedPassword);
+    if (!isPasswordMatch) {
+      const error = new Error(ERR.USERNAME_OR_PASSWORD_NOT_MATCH);
+      ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+      throwCriticalError(error, CODE.USERNAME_OR_PASSWORD_NOT_MATCH, MSG.USERNAME_OR_PASSWORD_NOT_MATCH, StatusCodes.BAD_REQUEST);
+    } else {
+      const removeOn = new Date(Date.now() + ms(SCHEDULE_DELETE_PROFILE_TIME));
+      const scheduleJobName = `${username}ProfileDeleteTask`;
+      schedule.scheduleJob(scheduleJobName, removeOn, async () => {
+        await removeManyByCondition({ user_id: userId }, UserVerifySignature);
+        const old = await removeById(userId, User);
+      });
+      return { removeOn };
+    }
+  } catch (error) {
+    ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.DELETE_PROFILE_FAILURE, MSG.DELETE_PROFILE_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -379,5 +408,6 @@ module.exports = {
     getActivateSessions,
     deactivate,
     signOut,
+    remove,
   },
 };

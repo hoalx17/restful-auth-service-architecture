@@ -46,5 +46,6 @@ router.get("/me", middleware.requireSignIn, authController.meController);
 router.get("/sessions", middleware.requireSignIn, authController.getActivateSessionsController);
 router.patch("/deactivate", middleware.requireSignIn, authController.deactivateController);
 router.delete("/sign-out", middleware.requireSignIn, authController.signOutController);
+router.delete("/delete", middleware.requireSignIn, authController.removeController);
 
 module.exports = router;
