@@ -1,6 +1,8 @@
 const chalk = require("chalk");
 const _ = require("lodash");
 const { StatusCodes } = require("http-status-codes");
+const bcrypt = require("bcrypt");
+const ms = require("ms");
 
 const {
   findById,
@@ -18,12 +20,20 @@ const { CODE, MSG, ERR } = require("./constant");
 const { throwCriticalError } = require("../../../error");
 const { createValidator, updateValidator, truthyValidator } = require("./validator");
 const { CloudinaryUtils } = require("../../../util");
-const { User, Role } = require("./model");
+const { User, Role, UserVerifySignature } = require("./model");
 const {
   userSchema: { joiUserCreate, joiUserUpdate },
 } = require("./schema");
+const { signToken } = require("./token");
 
-const { CREATION_CHUNK_SIZE, CLOUDINARY_DEFAULT_IMAGE_URL } = process.env;
+const {
+  CREATION_CHUNK_SIZE,
+  CLOUDINARY_DEFAULT_IMAGE_URL,
+  JWT_ACCESS_TOKEN_LIFETIME,
+  JWT_ACCESS_TOKEN_SECRET,
+  JWT_REFRESH_TOKEN_LIFETIME,
+  JWT_REFRESH_TOKEN_SECRET,
+} = process.env;
 
 const findTargetById = async (id, model, options) => {
   try {
@@ -180,6 +190,54 @@ const activate = async (username, confirmCode) => {
   }
 };
 
+const signIn = async (username, password) => {
+  try {
+    truthyValidator(
+      ERR.USERNAME_OR_PASSWORD_MUST_NOT_EMPTY,
+      CODE.USERNAME_OR_PASSWORD_MUST_NOT_EMPTY,
+      MSG.USERNAME_OR_PASSWORD_MUST_NOT_EMPTY,
+      username,
+      password
+    );
+    /** Find activate user by username and compare with password */
+    const requestUser = await findOneByCondition({ username, activated: true }, User);
+    const isValidLogin = await bcrypt.compare(password, requestUser.password || "");
+    /** Profile not found */
+    if (_.isEmpty(requestUser)) {
+      const error = new Error(ERR.PROFILE_NOT_FOUND);
+      ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+      throwCriticalError(error, CODE.PROFILE_NOT_FOUND, MSG.PROFILE_NOT_FOUND, StatusCodes.BAD_REQUEST);
+    } else if (!isValidLogin) {
+      /** Username or password not match */
+      const error = new Error(ERR.USERNAME_OR_PASSWORD_NOT_MATCH);
+      ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+      throwCriticalError(error, CODE.USERNAME_OR_PASSWORD_NOT_MATCH, MSG.USERNAME_OR_PASSWORD_NOT_MATCH, StatusCodes.BAD_REQUEST);
+    } else {
+      /** Sign token and verify signature */
+      const payload = { username: requestUser.username };
+      const accessToken = signToken(payload, JWT_ACCESS_TOKEN_LIFETIME, JWT_ACCESS_TOKEN_SECRET);
+      const refreshToken = signToken(payload, JWT_REFRESH_TOKEN_LIFETIME, JWT_REFRESH_TOKEN_SECRET);
+      const accessSignature = accessToken.slice(accessToken.lastIndexOf(".") + 1);
+      const refreshSignature = refreshToken.slice(accessToken.lastIndexOf(".") + 1);
+      const userVerifySignature = await saveOne(
+        {
+          accessSignature,
+          accessSignatureExpiredAt: new Date(Date.now() + ms(JWT_ACCESS_TOKEN_LIFETIME)),
+          refreshSignature,
+          refreshSignatureExpiredAt: new Date(Date.now() + ms(JWT_REFRESH_TOKEN_LIFETIME)),
+        },
+        UserVerifySignature
+      );
+      /** Save verify signature */
+      await userVerifySignature.setUser(requestUser);
+      return { accessToken, refreshToken };
+    }
+  } catch (error) {
+    ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.SIGN_IN_FAILURE, MSG.SIGN_IN_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
 module.exports = {
   core: {
     findTargetById,
@@ -195,5 +253,6 @@ module.exports = {
   auth: {
     signUp,
     activate,
+    signIn,
   },
 };

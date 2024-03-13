@@ -40,5 +40,6 @@ router.use("/roles", roleRouter);
 
 router.post("/sign-up", upload.single("imageUrl"), authController.signUpController);
 router.patch("/activate", authController.activateController);
+router.post("/sign-in", authController.signInController);
 
 module.exports = router;

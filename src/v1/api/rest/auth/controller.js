@@ -11,7 +11,7 @@ const {
   roleSchema: { joiRoleCreate, joiRoleUpdate },
 } = require("./schema");
 const { createCriticalError } = require("../../../error");
-const { responseFindById, responseFindManyByCondition, responseSave, responseUpdate, responseRemove } = require("./response");
+const { responseFindById, responseFindManyByCondition, responseSave, responseUpdate, responseRemove, responseSignIn } = require("./response");
 
 const { HASHIDS_SALT } = process.env;
 
@@ -122,6 +122,17 @@ const activateController = async (req, res, next) => {
   }
 };
 
+const signInController = async (req, res, next) => {
+  try {
+    const { username, password } = req.body;
+    const { accessToken, refreshToken } = await auth.signIn(username, password);
+    responseSignIn(res, { accessToken, refreshToken });
+  } catch (error) {
+    ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
+    next(createCriticalError(error, CODE.SIGN_IN_FAILURE, MSG.SIGN_IN_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR));
+  }
+};
+
 module.exports = {
   devController,
   roleController: {
@@ -134,5 +145,6 @@ module.exports = {
   authController: {
     signUpController,
     activateController,
+    signInController,
   },
 };

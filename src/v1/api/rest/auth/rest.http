@@ -1,7 +1,7 @@
 @HOST = http://localhost:3000/api/v1/auth
 @NOW = {{$datetime iso8601}}
-@ACCESS_TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImhvYWx4MTkiLCJpYXQiOjE3MTAyMzA1OTcsImV4cCI6MTcxMDIzNDE5N30.i5F-ywAZ0EpSbYhhlU3Xobi95Ikzmm41tbbdhwgauAc
-@REFRESH_TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImhvYWx4MTkiLCJpYXQiOjE3MTAyMzA1OTcsImV4cCI6MTcxMDMxNjk5N30.x_ciUGqkZGcOThDXd9Rw9h_OXAzhunIA8e5czqQjPQg
+@ACCESS_TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImhvYWx4MTciLCJpYXQiOjE3MTAyOTg5MTQsImV4cCI6MTcxMDMwMjUxNH0.s6ddIGTsR3coy1OS4GISjvLR4I3HB4DdT_Qx5Cd378s
+@REFRESH_TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImhvYWx4MTciLCJpYXQiOjE3MTAyOTg5MTQsImV4cCI6MTcxMDM4NTMxNH0.cgEV92d-fW3eOGhwfar9SwyJ7P95zbkzBy_Y8MXEQc4
 
 GET {{HOST}}/health-check/ping
 ###
@@ -54,3 +54,14 @@ Content-Type: application/json
 ###
 PATCH {{HOST}}/activate?username=hoalx17&confirmCode=21189dd4-5625-44c1-85f8-e99c4e4a0b5a
 Content-Type: application/json
+
+###
+POST {{HOST}}/sign-in
+Content-Type: application/json
+
+{
+    "username": "hoalx17",
+    "password": "hoalx17"
+}
+
+###
