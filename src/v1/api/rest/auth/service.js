@@ -3,6 +3,7 @@ const _ = require("lodash");
 const { StatusCodes } = require("http-status-codes");
 const bcrypt = require("bcrypt");
 const ms = require("ms");
+const { Op } = require("sequelize");
 
 const {
   findById,
@@ -33,8 +34,10 @@ const {
   JWT_ACCESS_TOKEN_SECRET,
   JWT_REFRESH_TOKEN_LIFETIME,
   JWT_REFRESH_TOKEN_SECRET,
+  MAX_ALLOW_SESSION,
 } = process.env;
 
+/** Core Service */
 const findTargetById = async (id, model, options) => {
   try {
     const target = await findById(id, model, options);
@@ -135,6 +138,46 @@ const removeTargetManyByCondition = async (where, model, options) => {
   }
 };
 
+/** Util Service */
+const ensureLegalSession = async (accessSignature, userId) => {
+  try {
+    const { count, rows: accessSignatures } = await findManyTargetByCondition(
+      {
+        user_id: userId,
+        access_signature_expired_at: {
+          [Op.gt]: new Date(),
+        },
+      },
+      { page: 1, size: parseInt(MAX_ALLOW_SESSION) },
+      UserVerifySignature
+    );
+    return accessSignatures.some((v, i, o) => v.toJSON().accessSignature === accessSignature);
+  } catch (error) {
+    ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.ENSURE_LEGAL_SESSION_FAILURE, MSG.ENSURE_LEGAL_SESSION_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
+const ensureCanMakeNewSession = async (userId) => {
+  try {
+    const { count, rows: accessSignatures } = await findManyTargetByCondition(
+      {
+        user_id: userId,
+        access_signature_expired_at: {
+          [Op.gt]: new Date(),
+        },
+      },
+      { page: 1, size: parseInt(MAX_ALLOW_SESSION) },
+      UserVerifySignature
+    );
+    console.log(accessSignatures.length);
+    return accessSignatures.length < parseInt(MAX_ALLOW_SESSION);
+  } catch (error) {
+    ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.ENSURE_CAN_MAKE_SESSION, MSG.ENSURE_CAN_MAKE_SESSION, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
 /** Auth Service */
 // TODO: Custom Sequelize error message
 const signUp = async (user, roleId, imageBuffer) => {
@@ -168,15 +211,12 @@ const activate = async (username, confirmCode) => {
       username,
       confirmCode
     );
-    /** Find not activate user by username and compare with confirmCode */
     const requestUser = await findOneByCondition({ username, activated: false }, User);
-    /** Profile has been activated before or profile not found */
     if (_.isEmpty(requestUser)) {
       const error = new Error(ERR.PROFILE_NOT_FOUND);
       ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
       throwCriticalError(error, CODE.PROFILE_NOT_FOUND, MSG.PROFILE_NOT_FOUND, StatusCodes.BAD_REQUEST);
     } else if (confirmCode !== requestUser.confirmCode) {
-      /** Confirm Code not match */
       const error = new Error(ERR.CONFIRM_CODE_NOT_MATCH);
       ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
       throwCriticalError(error, CODE.CONFIRM_CODE_NOT_MATCH, MSG.CONFIRM_CODE_NOT_MATCH, StatusCodes.BAD_REQUEST);
@@ -199,38 +239,38 @@ const signIn = async (username, password) => {
       username,
       password
     );
-    /** Find activate user by username and compare with password */
     const requestUser = await findOneByCondition({ username, activated: true }, User);
     const isValidLogin = await bcrypt.compare(password, requestUser.password || "");
-    /** Profile not found */
     if (_.isEmpty(requestUser)) {
       const error = new Error(ERR.PROFILE_NOT_FOUND);
       ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
       throwCriticalError(error, CODE.PROFILE_NOT_FOUND, MSG.PROFILE_NOT_FOUND, StatusCodes.BAD_REQUEST);
     } else if (!isValidLogin) {
-      /** Username or password not match */
       const error = new Error(ERR.USERNAME_OR_PASSWORD_NOT_MATCH);
       ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
       throwCriticalError(error, CODE.USERNAME_OR_PASSWORD_NOT_MATCH, MSG.USERNAME_OR_PASSWORD_NOT_MATCH, StatusCodes.BAD_REQUEST);
     } else {
-      /** Sign token and verify signature */
-      const payload = { username: requestUser.username };
-      const accessToken = signToken(payload, JWT_ACCESS_TOKEN_LIFETIME, JWT_ACCESS_TOKEN_SECRET);
-      const refreshToken = signToken(payload, JWT_REFRESH_TOKEN_LIFETIME, JWT_REFRESH_TOKEN_SECRET);
-      const accessSignature = accessToken.slice(accessToken.lastIndexOf(".") + 1);
-      const refreshSignature = refreshToken.slice(accessToken.lastIndexOf(".") + 1);
-      const userVerifySignature = await saveOne(
-        {
-          accessSignature,
-          accessSignatureExpiredAt: new Date(Date.now() + ms(JWT_ACCESS_TOKEN_LIFETIME)),
-          refreshSignature,
-          refreshSignatureExpiredAt: new Date(Date.now() + ms(JWT_REFRESH_TOKEN_LIFETIME)),
-        },
-        UserVerifySignature
-      );
-      /** Save verify signature */
-      await userVerifySignature.setUser(requestUser);
-      return { accessToken, refreshToken };
+      const isCanMakeNewSession = await ensureCanMakeNewSession(requestUser.id);
+      if (!isCanMakeNewSession) {
+        const error = new Error(ERR.MAX_SESSION_REACH);
+        ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+        throwCriticalError(error, CODE.MAX_SESSION_REACH, MSG.MAX_SESSION_REACH, StatusCodes.BAD_REQUEST);
+      } else {
+        const payload = { username: requestUser.username };
+        const [accessToken, accessSignature] = signToken(payload, JWT_ACCESS_TOKEN_LIFETIME, JWT_ACCESS_TOKEN_SECRET);
+        const [refreshToken, refreshSignature] = signToken(payload, JWT_REFRESH_TOKEN_LIFETIME, JWT_REFRESH_TOKEN_SECRET);
+        const userVerifySignature = await saveOne(
+          {
+            accessSignature,
+            accessSignatureExpiredAt: new Date(Date.now() + ms(JWT_ACCESS_TOKEN_LIFETIME)),
+            refreshSignature,
+            refreshSignatureExpiredAt: new Date(Date.now() + ms(JWT_REFRESH_TOKEN_LIFETIME)),
+          },
+          UserVerifySignature
+        );
+        await userVerifySignature.setUser(requestUser);
+        return { accessToken, refreshToken };
+      }
     }
   } catch (error) {
     ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
@@ -240,7 +280,7 @@ const signIn = async (username, password) => {
 
 const me = async (username) => {
   try {
-    /** Find activate user by username (profile not found has been handle at middleware) */
+    /** Profile not found has been handle at middleware */
     const requestUser = await findOneByCondition({ username, activated: true }, User, {
       include: {
         model: Role,
@@ -269,6 +309,10 @@ module.exports = {
     updateTargetManyByCondition,
     removeTargetById,
     removeTargetManyByCondition,
+  },
+  util: {
+    ensureLegalSession,
+    ensureCanMakeNewSession,
   },
   auth: {
     signUp,

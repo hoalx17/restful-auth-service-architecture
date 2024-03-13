@@ -14,7 +14,7 @@ const getTokenFromHeader = (req, headerName) => {
       ON_RELEASE || console.log(`Token: ${chalk.red(error.message)}`);
       throwCriticalError(error, CODE.AUTHORIZATION_HEADER_MUST_NOT_EMPTY, MSG.AUTHORIZATION_HEADER_MUST_NOT_EMPTY, StatusCodes.BAD_REQUEST);
     }
-    return token;
+    return [token, token.slice(token.lastIndexOf(".") + 1)];
   } catch (error) {
     ON_RELEASE || console.log(`Token: ${chalk.red(error.message)}`);
     throwCriticalError(error, CODE.GET_TOKEN_FROM_HEADER_FAILURE, MSG.GET_TOKEN_FROM_HEADER_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
@@ -24,7 +24,7 @@ const getTokenFromHeader = (req, headerName) => {
 const signToken = (payload, expiresIn, secretKey) => {
   try {
     const token = jwt.sign(payload, secretKey, { expiresIn });
-    return token;
+    return [token, token.slice(token.lastIndexOf(".") + 1)];
   } catch (error) {
     ON_RELEASE || console.log(`Token: ${chalk.red(error.message)}`);
     throwCriticalError(error, CODE.SIGN_TOKEN_FAILURE, MSG.SIGN_TOKEN_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
@@ -36,7 +36,6 @@ const verifyToken = (token, secretKey) => {
     const payload = jwt.verify(token, secretKey);
     return payload;
   } catch (error) {
-    console.log(error);
     ON_RELEASE || console.log(`Token: ${chalk.red(error.message)}`);
     if (error.message === "jwt expired") {
       throwCriticalError(error, CODE.TOKEN_HAS_BEEN_EXPIRED, MSG.TOKEN_HAS_BEEN_EXPIRED, StatusCodes.UNAUTHORIZED);
