@@ -66,7 +66,7 @@ const responseRemove = (res, old, msg) => {
   const metadata = { statusCode: StatusCodes.OK, statusText: ReasonPhrases.OK };
   const message = msg || MSG.DELETE_TARGET_SUCCESS;
   const error = { code: null, missing: false };
-  const payload = _.isEmpty(old) ? {} : { name: old.name };
+  const payload = _.isEmpty(old) ? {} : { name: old.name || old.username };
   const pagination = null;
   const hateos = null;
   res.status(StatusCodes.OK).json(new Response(metadata, error, message, payload, pagination, hateos));

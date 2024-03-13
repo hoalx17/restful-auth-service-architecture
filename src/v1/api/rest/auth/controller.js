@@ -177,6 +177,17 @@ const deactivateController = async (req, res, next) => {
   }
 };
 
+const signOutController = async (req, res, next) => {
+  try {
+    const { id, accessSignature } = req.user;
+    const old = await auth.signOut(id, accessSignature);
+    responseRemove(res, old, MSG.SIGN_OUT_SUCCESS);
+  } catch (error) {
+    ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
+    next(createCriticalError(error, CODE.SIGN_OUT_FAILURE, MSG.SIGN_OUT_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR));
+  }
+};
+
 module.exports = {
   devController,
   roleController: {
@@ -193,5 +204,6 @@ module.exports = {
     meController,
     getActivateSessionsController,
     deactivateController,
+    signOutController,
   },
 };

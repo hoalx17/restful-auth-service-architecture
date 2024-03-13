@@ -27,7 +27,7 @@ const requireSignIn = async (req, res, next) => {
         ON_RELEASE || console.log(`Middleware: ${chalk.red(error.message)}`);
         throwCriticalError(error, CODE.SIGNATURE_NOT_MATCH, MSG.SIGNATURE_NOT_MATCH, StatusCodes.UNAUTHORIZED);
       }
-      req.user = { username, id: requestUser.id, confirmCode: requestUser.confirmCode, hashedPassword: requestUser.password };
+      req.user = { username, id: requestUser.id, confirmCode: requestUser.confirmCode, hashedPassword: requestUser.password, accessSignature };
       next();
     }
   } catch (error) {

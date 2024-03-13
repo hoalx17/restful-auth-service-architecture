@@ -345,6 +345,16 @@ const deactivate = async (password, userId, hashedPassword) => {
   }
 };
 
+const signOut = async (userId, accessSignature) => {
+  try {
+    const old = await removeManyByCondition({ user_id: userId, access_signature: accessSignature }, UserVerifySignature);
+    return old;
+  } catch (error) {
+    ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.SIGN_OUT_FAILURE, MSG.SIGN_OUT_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
 module.exports = {
   core: {
     findTargetById,
@@ -368,5 +378,6 @@ module.exports = {
     me,
     getActivateSessions,
     deactivate,
+    signOut,
   },
 };
