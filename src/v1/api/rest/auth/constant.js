@@ -52,7 +52,8 @@ module.exports = {
     GET_PROFILE_INFO_FAILURE: "ERR_AUTH_SERVICE_19",
     DELETE_PROFILE_FAILURE: "ERR_AUTH_SERVICE_20",
     CANCEL_DELETE_PROFILE_FAILURE: "ERR_AUTH_SERVICE_21",
-    RESET_PASSWORD_FAILURE: "ERR_AUTH_SERVICE_22",
+    TERMINATE_SESSIONS_FAILURES: "ERR_AUTH_SERVICE_22",
+    RESET_PASSWORD_FAILURE: "ERR_AUTH_SERVICE_23",
 
     /** Token */
     SIGN_TOKEN_FAILURE: "ERR_AUTH_TOKEN_1",
@@ -132,6 +133,8 @@ module.exports = {
     DELETE_PROFILE_SUCCESS: "Delete profile success!",
     CANCEL_DELETE_PROFILE_FAILURE: "Cancel delete profile failure!",
     CANCEL_DELETE_PROFILE_SUCCESS: "Cancel delete profile success!",
+    TERMINATE_SESSIONS_FAILURES: "Terminal all activate failure!",
+    TERMINATE_SESSIONS_SUCCESS: "Terminal all activate success!",
     RESET_PASSWORD_FAILURE: "Reset password of profile failure!",
     RESET_PASSWORD_SUCCESS: "Reset password of profile success!",
 

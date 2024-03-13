@@ -21,7 +21,7 @@ const requireSignIn = async (req, res, next) => {
       ON_RELEASE || console.log(`Middleware: ${chalk.red(error.message)}`);
       throwCriticalError(error, CODE.PROFILE_NOT_FOUND, MSG.PROFILE_NOT_FOUND, StatusCodes.UNAUTHORIZED);
     } else {
-      const isValidSession = await util.ensureLegalSession(accessSignature, requestUser.id);
+      const isValidSession = await util.ensureLegalSession({ accessSignature, id: requestUser.id });
       if (!isValidSession) {
         const error = newServerError(ERR.SIGNATURE_NOT_MATCH);
         ON_RELEASE || console.log(`Middleware: ${chalk.red(error.message)}`);

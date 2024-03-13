@@ -7,7 +7,7 @@ const { roleController, devController, authController } = require("./controller"
 const {
   Constant: { ALLOW_IMAGE_FORMAT, CODE, MSG, ERR },
 } = require("../../../util");
-const { newNormalError } = require("../../../error");
+const { newNormalError, newServerError } = require("../../../error");
 const middleware = require("./middleware");
 
 const upload = multer({
@@ -15,7 +15,7 @@ const upload = multer({
     const fileType = path.extname(file.originalname);
     const isValidFileType = ALLOW_IMAGE_FORMAT.includes(fileType.slice(1));
     if (!isValidFileType) {
-      const error = new Error(ERR.FILE_TYPE_NOT_ALLOW);
+      const error = newServerError(ERR.FILE_TYPE_NOT_ALLOW);
       return callback(newNormalError(error, CODE.FILE_TYPE_NOT_ALLOW, MSG.FILE_TYPE_NOT_ALLOW, StatusCodes.BAD_REQUEST));
     }
     callback(null, true);
@@ -43,10 +43,11 @@ router.post("/sign-up", upload.single("imageUrl"), authController.signUpControll
 router.patch("/activate", authController.activateController);
 router.post("/sign-in", authController.signInController);
 router.get("/me", middleware.requireSignIn, authController.meController);
-router.get("/sessions", middleware.requireSignIn, authController.getActivateSessionsController);
+router.get("/sessions", middleware.requireSignIn, authController.getSessionsController);
 router.patch("/deactivate", middleware.requireSignIn, authController.deactivateController);
 router.delete("/sign-out", middleware.requireSignIn, authController.signOutController);
 router.delete("/delete", middleware.requireSignIn, authController.removeController);
 router.patch("/cancel-delete", middleware.requireSignIn, middleware.requirePendingDelete, authController.cancelRemoveController);
+router.delete("/sessions", middleware.requireSignIn, authController.terminateSessionsController);
 
 module.exports = router;

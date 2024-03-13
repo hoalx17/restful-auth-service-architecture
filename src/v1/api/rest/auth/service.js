@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const ms = require("ms");
 const { Op } = require("sequelize");
 const schedule = require("node-schedule");
+const Hashids = require("hashids");
 
 const {
   findById,
@@ -37,7 +38,10 @@ const {
   JWT_REFRESH_TOKEN_SECRET,
   MAX_ALLOW_SESSION,
   SCHEDULE_DELETE_PROFILE_TIME,
+  HASHIDS_SALT,
 } = process.env;
+
+const hashids = new Hashids(HASHIDS_SALT, 10);
 
 /** Core Service */
 const findTargetById = async (id, model, options) => {
@@ -141,11 +145,12 @@ const removeTargetManyByCondition = async (where, model, options) => {
 };
 
 /** Util Service */
-const ensureLegalSession = async (accessSignature, userId) => {
+const ensureLegalSession = async (payload) => {
   try {
+    const { id, accessSignature } = payload;
     const { count, rows: accessSignatures } = await findManyTargetByCondition(
       {
-        user_id: userId,
+        user_id: id,
         access_signature_expired_at: {
           [Op.gt]: new Date(),
         },
@@ -160,11 +165,12 @@ const ensureLegalSession = async (accessSignature, userId) => {
   }
 };
 
-const ensureCanMakeNewSession = async (userId) => {
+const ensureCanMakeNewSession = async (payload) => {
   try {
+    const { id } = payload;
     const { count, rows: accessSignatures } = await findManyTargetByCondition(
       {
-        user_id: userId,
+        user_id: id,
         access_signature_expired_at: {
           [Op.gt]: new Date(),
         },
@@ -251,7 +257,7 @@ const signIn = async (username, password) => {
       ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
       throwCriticalError(error, CODE.USERNAME_OR_PASSWORD_NOT_MATCH, MSG.USERNAME_OR_PASSWORD_NOT_MATCH, StatusCodes.BAD_REQUEST);
     } else {
-      const isCanMakeNewSession = await ensureCanMakeNewSession(requestUser.id);
+      const isCanMakeNewSession = await ensureCanMakeNewSession({ id: requestUser.id });
       if (!isCanMakeNewSession) {
         const error = newServerError(ERR.MAX_SESSION_REACH);
         ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
@@ -279,8 +285,9 @@ const signIn = async (username, password) => {
   }
 };
 
-const me = async (username) => {
+const me = async (payload) => {
   try {
+    const { username } = payload;
     const requestUser = await findOneByCondition({ username, activated: true }, User, {
       include: {
         model: Role,
@@ -298,11 +305,12 @@ const me = async (username) => {
   }
 };
 
-const getActivateSessions = async (userId) => {
+const getSessions = async (payload) => {
   try {
+    const { id } = payload;
     const { count, rows } = await findManyTargetByCondition(
       {
-        user_id: userId,
+        user_id: id,
         access_signature_expired_at: {
           [Op.gt]: new Date(),
         },
@@ -311,6 +319,7 @@ const getActivateSessions = async (userId) => {
       UserVerifySignature
     );
     const sessions = rows.map((v, i, o) => ({
+      id: hashids.encode(v.id),
       createdAt: v.created_at,
       expiredAt: v.accessSignatureExpiredAt,
       refreshExpiredAt: v.refreshSignatureExpiredAt,
@@ -322,8 +331,9 @@ const getActivateSessions = async (userId) => {
   }
 };
 
-const deactivate = async (password, userId, hashedPassword) => {
+const deactivate = async (password, payload) => {
   try {
+    const { id, hashedPassword } = payload;
     truthyValidator(
       ERR.USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY,
       CODE.USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY,
@@ -346,9 +356,10 @@ const deactivate = async (password, userId, hashedPassword) => {
   }
 };
 
-const signOut = async (userId, accessSignature) => {
+const signOut = async (payload) => {
   try {
-    const old = await removeManyByCondition({ user_id: userId, access_signature: accessSignature }, UserVerifySignature);
+    const { id, accessSignature } = payload;
+    const old = await removeManyByCondition({ user_id: id, access_signature: accessSignature }, UserVerifySignature);
     return old;
   } catch (error) {
     ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
@@ -356,8 +367,9 @@ const signOut = async (userId, accessSignature) => {
   }
 };
 
-const remove = async (userId, username, hashedPassword, password) => {
+const remove = async (password, payload) => {
   try {
+    const { id, hashedPassword, username } = payload;
     truthyValidator(ERR.USERNAME_OR_PASSWORD_MUST_NOT_EMPTY, CODE.USERNAME_OR_PASSWORD_MUST_NOT_EMPTY, MSG.USERNAME_OR_PASSWORD_MUST_NOT_EMPTY, password);
     const isPasswordMatch = await bcrypt.compare(password, hashedPassword);
     if (!isPasswordMatch) {
@@ -365,12 +377,12 @@ const remove = async (userId, username, hashedPassword, password) => {
       ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
       throwCriticalError(error, CODE.USERNAME_OR_PASSWORD_NOT_MATCH, MSG.USERNAME_OR_PASSWORD_NOT_MATCH, StatusCodes.BAD_REQUEST);
     } else {
-      const old = await updateById(userId, { isPendingDelete: true }, User);
+      const old = await updateById(id, { isPendingDelete: true }, User);
       const removeOn = new Date(Date.now() + ms(SCHEDULE_DELETE_PROFILE_TIME));
       const scheduleJobName = `${username}ProfileDeleteTask`;
       schedule.scheduleJob(scheduleJobName, removeOn, async () => {
-        await removeManyByCondition({ user_id: userId }, UserVerifySignature);
-        await removeById(userId, User);
+        await removeManyByCondition({ user_id: id }, UserVerifySignature);
+        await removeById(id, User);
       });
       return { old, removeOn };
     }
@@ -380,9 +392,9 @@ const remove = async (userId, username, hashedPassword, password) => {
   }
 };
 
-const cancelRemove = async (username, password, payload) => {
+const cancelRemove = async (password, payload) => {
   try {
-    const { id, hashedPassword } = payload;
+    const { id, hashedPassword, username } = payload;
     truthyValidator(ERR.USERNAME_OR_PASSWORD_MUST_NOT_EMPTY, CODE.USERNAME_OR_PASSWORD_MUST_NOT_EMPTY, MSG.USERNAME_OR_PASSWORD_MUST_NOT_EMPTY, password);
     const isPasswordMatch = await bcrypt.compare(password, hashedPassword);
     if (!isPasswordMatch) {
@@ -399,6 +411,26 @@ const cancelRemove = async (username, password, payload) => {
   } catch (error) {
     ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
     throwCriticalError(error, CODE.CANCEL_DELETE_PROFILE_FAILURE, MSG.CANCEL_DELETE_PROFILE_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
+const terminateSessions = async (payload) => {
+  try {
+    const { accessSignature, id } = payload;
+    const terminateSession = await removeManyByCondition(
+      {
+        user_id: id,
+        access_signature: {
+          [Op.ne]: accessSignature,
+        },
+      },
+      UserVerifySignature
+    );
+    const sessions = terminateSession.map((v, i, o) => ({ id: hashids.encode(v.id) }));
+    return { count: sessions.length, sessions };
+  } catch (error) {
+    ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.TERMINATE_SESSIONS_FAILURES, MSG.TERMINATE_SESSIONS_FAILURES, StatusCodes.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -423,10 +455,11 @@ module.exports = {
     activate,
     signIn,
     me,
-    getActivateSessions,
+    getSessions,
     deactivate,
     signOut,
     remove,
     cancelRemove,
+    terminateSessions,
   },
 };

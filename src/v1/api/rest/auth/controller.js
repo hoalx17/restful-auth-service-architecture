@@ -145,7 +145,8 @@ const signInController = async (req, res, next) => {
 const meController = async (req, res, next) => {
   try {
     const { username } = req.user;
-    const requestUser = await auth.me(username);
+    const payload = { username };
+    const requestUser = await auth.me(payload);
     const user = responseTransform(requestUser.toJSON());
     responseFindOrigin(res, user, MSG.GET_PROFILE_INFO_SUCCESS);
   } catch (error) {
@@ -154,10 +155,11 @@ const meController = async (req, res, next) => {
   }
 };
 
-const getActivateSessionsController = async (req, res, next) => {
+const getSessionsController = async (req, res, next) => {
   try {
     const { id } = req.user;
-    const { count, sessions } = await auth.getActivateSessions(id);
+    const payload = { id };
+    const { count, sessions } = await auth.getSessions(payload);
     responseFindManyOrigin(res, count, sessions, {}, undefined, MSG.GET_ALL_SESSION_SUCCESS);
   } catch (error) {
     ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
@@ -169,7 +171,8 @@ const deactivateController = async (req, res, next) => {
   try {
     const { password } = req.body;
     const { id, hashedPassword } = req.user;
-    const old = await auth.deactivate(password, id, hashedPassword);
+    const payload = { id, hashedPassword };
+    const old = await auth.deactivate(password, payload);
     responseUpdate(res, old, MSG.DEACTIVATE_SUCCESS);
   } catch (error) {
     ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
@@ -180,7 +183,8 @@ const deactivateController = async (req, res, next) => {
 const signOutController = async (req, res, next) => {
   try {
     const { id, accessSignature } = req.user;
-    const old = await auth.signOut(id, accessSignature);
+    const payload = { id, accessSignature };
+    const old = await auth.signOut(payload);
     responseRemove(res, old, MSG.SIGN_OUT_SUCCESS);
   } catch (error) {
     ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
@@ -192,7 +196,8 @@ const removeController = async (req, res, next) => {
   try {
     const { password } = req.body;
     const { id, username, hashedPassword } = req.user;
-    const { old, removeOn } = await auth.remove(id, username, hashedPassword, password);
+    const payload = { id, hashedPassword, username };
+    const { old, removeOn } = await auth.remove(username, password, payload);
     responseRemove(res, { username: old.username, removeOn }, MSG.DELETE_PROFILE_SUCCESS);
   } catch (error) {
     ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
@@ -204,12 +209,24 @@ const cancelRemoveController = async (req, res, next) => {
   try {
     const { password } = req.body;
     const { id, username, hashedPassword } = req.user;
-    const payload = { id, hashedPassword };
-    const old = await auth.cancelRemove(username, password, payload);
+    const payload = { id, hashedPassword, username };
+    const old = await auth.cancelRemove(password, payload);
     responseRemove(res, old, MSG.CANCEL_DELETE_PROFILE_SUCCESS);
   } catch (error) {
     ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
     next(createCriticalError(error, CODE.DELETE_PROFILE_FAILURE, MSG.DELETE_PROFILE_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR));
+  }
+};
+
+const terminateSessionsController = async (req, res, next) => {
+  try {
+    const { accessSignature, id } = req.user;
+    const payload = { accessSignature, id };
+    const { count, sessions } = await auth.terminateSessions(payload);
+    responseRemove(res, sessions, MSG.TERMINATE_SESSIONS_SUCCESS);
+  } catch (error) {
+    ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
+    next(createCriticalError(error, CODE.TERMINATE_SESSIONS_FAILURES, MSG.TERMINATE_SESSIONS_FAILURES, StatusCodes.INTERNAL_SERVER_ERROR));
   }
 };
 
@@ -227,10 +244,11 @@ module.exports = {
     activateController,
     signInController,
     meController,
-    getActivateSessionsController,
+    getSessionsController,
     deactivateController,
     signOutController,
     removeController,
     cancelRemoveController,
+    terminateSessionsController,
   },
 };

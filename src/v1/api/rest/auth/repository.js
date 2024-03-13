@@ -4,7 +4,7 @@ const { Op } = require("sequelize");
 const _ = require("lodash");
 const { StatusCodes } = require("http-status-codes");
 
-const { throwCriticalError } = require("../../../error");
+const { throwCriticalError, newServerError } = require("../../../error");
 const { CODE, MSG, ERR } = require("./constant");
 const { ON_RELEASE } = require("../../../../../constant");
 
@@ -83,7 +83,7 @@ const updateById = async (id, target, model, options) => {
   try {
     const old = await findById(id, model);
     if (_.isEmpty(old)) {
-      const error = new Error(ERR.NOT_MODIFIED);
+      const error = newServerError(ERR.NOT_MODIFIED);
       ON_RELEASE || console.log(`Repository: ${chalk.red(error.message)}`);
       throwCriticalError(error, CODE.NOT_MODIFY, MSG.NOT_MODIFY, StatusCodes.NOT_MODIFIED);
     }
@@ -106,7 +106,7 @@ const updateManyByCondition = async (where, target, model, options) => {
       where,
     });
     if (_.isEmpty(old)) {
-      const error = new Error(ERR.NOT_MODIFIED);
+      const error = newServerError(ERR.NOT_MODIFIED);
       ON_RELEASE || console.log(`Repository: ${chalk.red(error.message)}`);
       throwCriticalError(error, CODE.NOT_MODIFY, MSG.NOT_MODIFY, StatusCodes.NOT_MODIFIED);
     }
@@ -126,7 +126,7 @@ const removeById = async (id, model, options) => {
   try {
     const old = await findById(id, model);
     if (_.isEmpty(old)) {
-      const error = new Error(ERR.NOT_MODIFIED);
+      const error = newServerError(ERR.NOT_MODIFIED);
       ON_RELEASE || console.log(`Repository: ${chalk.red(error.message)}`);
       throwCriticalError(error, CODE.NOT_MODIFY, MSG.NOT_MODIFY, StatusCodes.NOT_MODIFIED);
     }
@@ -148,7 +148,7 @@ const removeManyByCondition = async (where, model, options) => {
       where,
     });
     if (_.isEmpty(old)) {
-      const error = new Error(ERR.NOT_MODIFIED);
+      const error = newServerError(ERR.NOT_MODIFIED);
       ON_RELEASE || console.log(`Repository: ${chalk.red(error.message)}`);
       throwCriticalError(error, CODE.NOT_MODIFY, MSG.NOT_MODIFY, StatusCodes.NOT_MODIFIED);
     }

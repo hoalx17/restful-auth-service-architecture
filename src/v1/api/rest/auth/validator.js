@@ -3,7 +3,7 @@ const _ = require("lodash");
 const { StatusCodes } = require("http-status-codes");
 
 const { CODE, MSG } = require("./constant");
-const { throwCriticalError } = require("../../../error");
+const { throwCriticalError, newServerError } = require("../../../error");
 const { ON_RELEASE } = require("../../../../../constant");
 
 const createValidator = async (req, schema) => {
@@ -30,7 +30,7 @@ const truthyValidator = function (errMsg, code, msg, ...args) {
       .slice(3)
       .every((v) => !!v);
     if (!isAllTruthy) {
-      const error = new Error(errMsg);
+      const error = newServerError(errMsg);
       ON_RELEASE || console.log(`Validator: ${chalk.red(error.message)}`);
       throwCriticalError(error, code, msg, StatusCodes.BAD_REQUEST);
     }
