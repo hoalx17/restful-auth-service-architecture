@@ -95,6 +95,24 @@ const responseFindOrigin = (res, target, msg) => {
   res.status(statusCode).json(new Response(metadata, error, message, payload, pagination, hateos));
 };
 
+const responseFindManyOrigin = (res, count, rows, paginate, cursor, msg) => {
+  const statusCode = count ? StatusCodes.OK : StatusCodes.NO_CONTENT;
+  const metadata = count
+    ? { statusCode: StatusCodes.OK, statusText: ReasonPhrases.OK }
+    : { statusCode: StatusCodes.NO_CONTENT, statusText: ReasonPhrases.NO_CONTENT };
+  const message = msg || count ? MSG.QUERY_TARGET_MANY_SUCCESS : MSG.QUERY_TARGET_NO_CONTENT;
+  const error = { code: null, missing: false };
+  const payload = rows;
+  const pagination = {
+    page: paginate.page < PAGINATE_BOUNDARY ? paginate.page : undefined,
+    size: paginate.page < PAGINATE_BOUNDARY ? paginate.size : undefined,
+    total: paginate.page < PAGINATE_BOUNDARY ? count : undefined,
+    cursor,
+  };
+  const hateos = null;
+  res.status(statusCode).json(new Response(metadata, error, message, payload, pagination, hateos));
+};
+
 module.exports = {
   responseFindById,
   responseFindManyByCondition,
@@ -103,4 +121,5 @@ module.exports = {
   responseRemove,
   responseSignIn,
   responseFindOrigin,
+  responseFindManyOrigin,
 };

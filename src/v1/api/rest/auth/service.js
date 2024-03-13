@@ -170,7 +170,6 @@ const ensureCanMakeNewSession = async (userId) => {
       { page: 1, size: parseInt(MAX_ALLOW_SESSION) },
       UserVerifySignature
     );
-    console.log(accessSignatures.length);
     return accessSignatures.length < parseInt(MAX_ALLOW_SESSION);
   } catch (error) {
     ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
@@ -298,6 +297,30 @@ const me = async (username) => {
   }
 };
 
+const getActivateSessions = async (userId) => {
+  try {
+    const { count, rows } = await findManyTargetByCondition(
+      {
+        user_id: userId,
+        access_signature_expired_at: {
+          [Op.gt]: new Date(),
+        },
+      },
+      { page: 1, size: parseInt(MAX_ALLOW_SESSION) },
+      UserVerifySignature
+    );
+    const sessions = rows.map((v, i, o) => ({
+      createdAt: v.created_at,
+      expiredAt: v.accessSignatureExpiredAt,
+      refreshExpiredAt: v.refreshSignatureExpiredAt,
+    }));
+    return { count, sessions };
+  } catch (error) {
+    ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.GET_ALL_SESSION_FAILURE, MSG.GET_ALL_SESSION_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
 module.exports = {
   core: {
     findTargetById,
@@ -319,5 +342,6 @@ module.exports = {
     activate,
     signIn,
     me,
+    getActivateSessions,
   },
 };

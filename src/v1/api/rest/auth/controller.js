@@ -19,6 +19,7 @@ const {
   responseRemove,
   responseSignIn,
   responseFindOrigin,
+  responseFindManyOrigin,
 } = require("./response");
 
 const { HASHIDS_SALT } = process.env;
@@ -153,6 +154,17 @@ const meController = async (req, res, next) => {
   }
 };
 
+const getActivateSessionsController = async (req, res, next) => {
+  try {
+    const { id } = req.user;
+    const { count, sessions } = await auth.getActivateSessions(id);
+    responseFindManyOrigin(res, count, sessions, {}, undefined, MSG.GET_ALL_SESSION_SUCCESS);
+  } catch (error) {
+    ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
+    next(createCriticalError(error, CODE.GET_ALL_SESSION_FAILURE, MSG.GET_ALL_SESSION_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR));
+  }
+};
+
 module.exports = {
   devController,
   roleController: {
@@ -167,5 +179,6 @@ module.exports = {
     activateController,
     signInController,
     meController,
+    getActivateSessionsController,
   },
 };

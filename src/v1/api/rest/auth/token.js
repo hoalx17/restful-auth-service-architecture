@@ -12,12 +12,12 @@ const getTokenFromHeader = (req, headerName) => {
     if (!token) {
       const error = new Error(ERR.AUTHORIZATION_HEADER_MUST_NOT_EMPTY);
       ON_RELEASE || console.log(`Token: ${chalk.red(error.message)}`);
-      throwCriticalError(error, CODE.AUTHORIZATION_HEADER_MUST_NOT_EMPTY, MSG.AUTHORIZATION_HEADER_MUST_NOT_EMPTY, StatusCodes.BAD_REQUEST);
+      throwCriticalError(error, CODE.AUTHORIZATION_HEADER_MUST_NOT_EMPTY, MSG.AUTHORIZATION_HEADER_MUST_NOT_EMPTY, StatusCodes.UNAUTHORIZED);
     }
     return [token, token.slice(token.lastIndexOf(".") + 1)];
   } catch (error) {
     ON_RELEASE || console.log(`Token: ${chalk.red(error.message)}`);
-    throwCriticalError(error, CODE.GET_TOKEN_FROM_HEADER_FAILURE, MSG.GET_TOKEN_FROM_HEADER_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
+    throwCriticalError(error, CODE.GET_TOKEN_FROM_HEADER_FAILURE, MSG.GET_TOKEN_FROM_HEADER_FAILURE, StatusCodes.UNAUTHORIZED);
   }
 };
 

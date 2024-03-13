@@ -43,5 +43,6 @@ router.post("/sign-up", upload.single("imageUrl"), authController.signUpControll
 router.patch("/activate", authController.activateController);
 router.post("/sign-in", authController.signInController);
 router.get("/me", middleware.requireSignIn, authController.meController);
+router.get("/sessions", middleware.requireSignIn, authController.getActivateSessionsController);
 
 module.exports = router;
