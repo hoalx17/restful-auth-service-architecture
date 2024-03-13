@@ -17,6 +17,14 @@ class NormalError extends Error {
   }
 }
 
+class ServerError extends Error {
+  constructor(message) {
+    super(message);
+  }
+}
+
+const newServerError = (message) => new ServerError(message);
+
 const throwCriticalError = (error, code, message, statusCode) => {
   throw new CriticalError(error.message, {
     code: error.options?.code ?? code,
@@ -68,6 +76,7 @@ const createNormalError = (error, code, message, statusCode) =>
   });
 
 module.exports = {
+  newServerError,
   throwCriticalError,
   throwNormalError,
   createCriticalError,

@@ -47,5 +47,6 @@ router.get("/sessions", middleware.requireSignIn, authController.getActivateSess
 router.patch("/deactivate", middleware.requireSignIn, authController.deactivateController);
 router.delete("/sign-out", middleware.requireSignIn, authController.signOutController);
 router.delete("/delete", middleware.requireSignIn, authController.removeController);
+router.patch("/cancel-delete", middleware.requireSignIn, middleware.requirePendingDelete, authController.cancelRemoveController);
 
 module.exports = router;

@@ -24,6 +24,8 @@ module.exports = {
     REQUIRED_SIGN_IN_TO_CONTINUE: "ERR_AUTH_MIDDLEWARE_1",
     TOKEN_HAS_BEEN_EXPIRED: "ERR_AUTH_MIDDLEWARE_2",
     SIGNATURE_NOT_MATCH: "ERR_AUTH_MIDDLEWARE_3",
+    REQUIRED_PENDING_DELETE: "ERR_AUTH_MIDDLEWARE_4",
+    REQUIRED_PENDING_DELETE_TO_CONTINUE: "ERR_AUTH_MIDDLEWARE_5",
 
     /** Service */
     QUERY_TARGET_FAILURE: "ERR_AUTH_SERVICE_1",
@@ -49,7 +51,8 @@ module.exports = {
     SIGN_OUT_FAILURE: "ERR_AUTH_SERVICE_18",
     GET_PROFILE_INFO_FAILURE: "ERR_AUTH_SERVICE_19",
     DELETE_PROFILE_FAILURE: "ERR_AUTH_SERVICE_20",
-    RESET_PASSWORD_FAILURE: "ERR_AUTH_SERVICE_21",
+    CANCEL_DELETE_PROFILE_FAILURE: "ERR_AUTH_SERVICE_21",
+    RESET_PASSWORD_FAILURE: "ERR_AUTH_SERVICE_22",
 
     /** Token */
     SIGN_TOKEN_FAILURE: "ERR_AUTH_TOKEN_1",
@@ -82,6 +85,8 @@ module.exports = {
     REQUIRED_SIGN_IN_TO_CONTINUE: "Required sign in to continue!",
     TOKEN_HAS_BEEN_EXPIRED: "Token has been expired!",
     SIGNATURE_NOT_MATCH: "Signature not match!",
+    REQUIRED_PENDING_DELETE: "Required pending delete to continue!",
+    REQUIRED_PENDING_DELETE_TO_CONTINUE: "Only profile is pending delete can to this!",
 
     /** Service */
     QUERY_TARGET_FAILURE: "Query resource failure!",
@@ -125,6 +130,8 @@ module.exports = {
     PROFILE_NOT_FOUND: "Profile not found: wrong username and password!",
     DELETE_PROFILE_FAILURE: "Delete profile failure!",
     DELETE_PROFILE_SUCCESS: "Delete profile success!",
+    CANCEL_DELETE_PROFILE_FAILURE: "Cancel delete profile failure!",
+    CANCEL_DELETE_PROFILE_SUCCESS: "Cancel delete profile success!",
     RESET_PASSWORD_FAILURE: "Reset password of profile failure!",
     RESET_PASSWORD_SUCCESS: "Reset password of profile success!",
 
@@ -147,6 +154,7 @@ module.exports = {
     REQUIRED_SIGN_IN_TO_CONTINUE: "sign in to continue",
     SIGNATURE_NOT_MATCH: "signature not match",
     MAX_SESSION_REACH: "max_session_reach",
+    REQUIRED_PENDING_DELETE_TO_CONTINUE: "only pending delete can continue",
   },
 
   SCHEMA: {
@@ -161,6 +169,7 @@ module.exports = {
     USER_FINGERPRINT_MUST_NOT_EMPTY: "User: fingerprint must not empty!",
     USER_ACTIVATED_STATUS_MUST_BE_BOOLEAN: "User: activated status must be boolean!",
     USER_CONFIRM_CODE_MUST_NOT_EMPTY: "User: confirmCode must not empty!",
+    USER_IS_PENDING_DELETE_MUST_NOT_EMPTY: "User: isPendingDelete must not empty!",
     USER_VERIFY_SIGNATURE_ACCESS_MUST_NOT_EMPTY: "User Verify Signature: access token must not be empty!",
     USER_VERIFY_SIGNATURE_ACCESS_EXPIRED_AT_MUST_NOT_EMPTY: "User Verify Signature: access token expired at must not be empty!",
     USER_VERIFY_SIGNATURE_ACCESS_EXPIRED_AT_MUST_BE_DATE_TIME: "User Verify Signature: access token expired at must be date time!",

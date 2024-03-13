@@ -56,7 +56,7 @@ const responseUpdate = (res, old, msg) => {
   const metadata = { statusCode: StatusCodes.OK, statusText: ReasonPhrases.OK };
   const message = msg || MSG.UPDATE_TARGET_SUCCESS;
   const error = { code: null, missing: false };
-  const payload = _.isEmpty(old) ? {} : old.name || old.username || old;
+  const payload = _.isEmpty(old) ? {} : { id: old.name || old.username };
   const pagination = null;
   const hateos = null;
   res.status(StatusCodes.OK).json(new Response(metadata, error, message, payload, pagination, hateos));
@@ -66,7 +66,7 @@ const responseRemove = (res, old, msg) => {
   const metadata = { statusCode: StatusCodes.OK, statusText: ReasonPhrases.OK };
   const message = msg || MSG.DELETE_TARGET_SUCCESS;
   const error = { code: null, missing: false };
-  const payload = _.isEmpty(old) ? {} : old.name || old.username || old.removeOn;
+  const payload = _.isEmpty(old) ? {} : { id: old.name || old.username, removeOn: old.removeOn };
   const pagination = null;
   const hateos = null;
   res.status(StatusCodes.OK).json(new Response(metadata, error, message, payload, pagination, hateos));

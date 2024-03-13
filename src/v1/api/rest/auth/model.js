@@ -91,6 +91,12 @@ const User = sequelize.define(
       field: "confirm_code",
       allowNull: false,
     },
+    isPendingDelete: {
+      type: DataTypes.BOOLEAN,
+      field: "is_pending_delete",
+      allowNull: false,
+      defaultValue: false,
+    },
   },
   {
     tableName: "users",
