@@ -2,10 +2,10 @@ const chalk = require("chalk");
 const { StatusCodes } = require("http-status-codes");
 const Hashids = require("hashids");
 
-const { core } = require("./service");
+const { core, auth } = require("./service");
 const { ON_RELEASE } = require("../../../../../constant");
 const { CODE, MSG } = require("./constant");
-const { requestTransform, roleTransform } = require("./transform");
+const { requestTransform, roleTransform, userTransform } = require("./transform");
 const { Role } = require("./model");
 const {
   roleSchema: { joiRoleCreate, joiRoleUpdate },
@@ -97,6 +97,19 @@ const removeRoleByIdController = async (req, res, next) => {
 };
 
 /** Auth Controller */
+const signUpController = async (req, res, next) => {
+  try {
+    const target = await userTransform.singleCreationUserTransform(req);
+    const roleId = req.body?.roleId || req.body[0]?.roleId;
+    const targetRoleId = hashids.decode(roleId)[0] || 1;
+    const imageBuffer = req.file?.buffer;
+    const saved = await auth.signUp(target, targetRoleId, imageBuffer);
+    responseSave(res, saved, MSG.SIGNUP_SUCCESS);
+  } catch (error) {
+    ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
+    next(createCriticalError(error, CODE.SIGNUP_FAILURE, MSG.SIGNUP_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR));
+  }
+};
 
 module.exports = {
   devController,
@@ -107,5 +120,7 @@ module.exports = {
     updateRoleByIdController,
     removeRoleByIdController,
   },
-  authController: {},
+  authController: {
+    signUpController,
+  },
 };

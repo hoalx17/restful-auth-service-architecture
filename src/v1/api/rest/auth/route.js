@@ -3,7 +3,7 @@ const multer = require("multer");
 const path = require("path");
 const { StatusCodes } = require("http-status-codes");
 
-const { roleController, devController } = require("./controller");
+const { roleController, devController, authController } = require("./controller");
 const {
   Constant: { ALLOW_IMAGE_FORMAT, CODE, MSG, ERR },
 } = require("../../../util");
@@ -37,5 +37,7 @@ roleRouter.delete("/:id", roleController.removeRoleByIdController);
 /** Auth Router */
 router.get("/dev", devController);
 router.use("/roles", roleRouter);
+
+router.post("/sign-up", upload.single("imageUrl"), authController.signUpController);
 
 module.exports = router;

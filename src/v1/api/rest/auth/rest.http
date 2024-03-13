@@ -34,4 +34,21 @@ Content-Type: application/json
 
 ###
 DELETE {{HOST}}/roles/KWko74YeBv
+
+###
+POST {{HOST}}/sign-up
+Content-Type: application/json
+
+{
+    "username": "hoalx17",
+    "password": "hoalx17",
+    "firstName": "Le",
+    "lastName": "Xuan Hoa",
+    "birthDay": "{{NOW}}",
+    "gender": true,
+    "email": "hoalx17@gmail.com",
+    "tel": "0364015017",
+    "roleId": "rJKE2zEQ1F"
+}
+
 ###

@@ -17,7 +17,13 @@ const { ON_RELEASE } = require("../../../../../constant");
 const { CODE, MSG, ERR } = require("./constant");
 const { throwCriticalError } = require("../../../error");
 const { createValidator, updateValidator } = require("./validator");
-const { CREATION_CHUNK_SIZE } = process.env;
+const { CloudinaryUtils } = require("../../../util");
+const { User, Role } = require("./model");
+const {
+  userSchema: { joiUserCreate, joiUserUpdate },
+} = require("./schema");
+
+const { CREATION_CHUNK_SIZE, CLOUDINARY_DEFAULT_IMAGE_URL } = process.env;
 
 const findTargetById = async (id, model, options) => {
   try {
@@ -119,6 +125,30 @@ const removeTargetManyByCondition = async (where, model, options) => {
   }
 };
 
+/** Auth Service */
+// TODO: Custom Sequelize error message
+const signUp = async (user, roleId, imageBuffer) => {
+  try {
+    // TODO: Should validate request before uploading
+    /** Upload image to Cloudinary, if imageBuffer not provided, use default image url */
+    if (imageBuffer) {
+      const uploadImage = await CloudinaryUtils.uploadSingleImage(imageBuffer);
+      user.imageUrl = uploadImage.secure_url;
+    } else {
+      user.imageUrl = CLOUDINARY_DEFAULT_IMAGE_URL;
+    }
+    /** Save user with role, if role id not exists, save as default role (user) */
+    const role = await findTargetById(roleId, Role);
+    const saved = await saveOneTarget(user, joiUserCreate, User);
+    await role.addUsers(saved);
+    // TODO: Send activation request email
+    return saved;
+  } catch (error) {
+    ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.SIGNUP_FAILURE, MSG.SIGNUP_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
 module.exports = {
   core: {
     findTargetById,
@@ -131,5 +161,7 @@ module.exports = {
     removeTargetById,
     removeTargetManyByCondition,
   },
-  auth: {},
+  auth: {
+    signUp,
+  },
 };
