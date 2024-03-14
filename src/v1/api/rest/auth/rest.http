@@ -1,7 +1,7 @@
 @HOST = http://localhost:3000/api/v1/auth
 @NOW = {{$datetime iso8601}}
-@ACCESS_TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImhvYWx4MTciLCJpYXQiOjE3MTAzMzczMzEsImV4cCI6MTcxMDM0MDkzMX0.0aP0lVvZQ9DylM45d6LT0zl1N1-G78bYcjDz7qtNlpw
-@REFRESH_TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImhvYWx4MTciLCJpYXQiOjE3MTAzMzczMzEsImV4cCI6MTcxMDQyMzczMX0.i0nr6N3kNMla4MnePUiAJjWr4ygarM9yUerOm3QEHVM
+@ACCESS_TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImhvYWx4MTciLCJpYXQiOjE3MTAzODU3NzUsImV4cCI6MTcxMDM4OTM3NX0.xtEl4d7e_XrcQlbQUZUbuhARbU-AXIwVkzKLEsFAbhI
+@REFRESH_TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImhvYWx4MTciLCJpYXQiOjE3MTAzODU3NzUsImV4cCI6MTcxMDQ3MjE3NX0.PIeIYFKVym7rw_CROUu3fRsVH4rIci0S8abPU1zyNeY
 
 GET {{HOST}}/health-check/ping
 ###
@@ -41,14 +41,14 @@ POST {{HOST}}/sign-up
 Content-Type: application/json
 
 {
-    "username": "hoalx17",
-    "password": "hoalx17",
+    "username": "hoalx19",
+    "password": "hoalx19",
     "firstName": "Le",
     "lastName": "Xuan Hoa",
     "birthDay": "{{NOW}}",
     "gender": true,
-    "email": "hoalx17@gmail.com",
-    "tel": "0364015017",
+    "email": "hoalx19@gmail.com",
+    "tel": "0364015019",
     "roleId": "rJKE2zEQ1F"
 }
 
@@ -109,6 +109,11 @@ Authorization: Bearer {{ACCESS_TOKEN}}
 
 ###
 DELETE {{HOST}}/sessions
+Content-Type: application/json
+Authorization: Bearer {{ACCESS_TOKEN}}
+
+###
+DELETE {{HOST}}/sessions/GkDmBrmOl5
 Content-Type: application/json
 Authorization: Bearer {{ACCESS_TOKEN}}
 

@@ -157,8 +157,8 @@ const meController = async (req, res, next) => {
 
 const getSessionsController = async (req, res, next) => {
   try {
-    const { id } = req.user;
-    const payload = { id };
+    const { id, accessSignature } = req.user;
+    const payload = { id, accessSignature };
     const { count, sessions } = await auth.getSessions(payload);
     responseFindManyOrigin(res, count, sessions, {}, undefined, MSG.GET_ALL_SESSION_SUCCESS);
   } catch (error) {
@@ -230,6 +230,19 @@ const terminateSessionsController = async (req, res, next) => {
   }
 };
 
+const terminateSessionController = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { id: userId, accessSignature } = req.user;
+    const payload = { id: userId, accessSignature };
+    const session = await auth.terminateSession(id, payload);
+    responseRemove(res, session, MSG.TERMINATE_SESSION_SUCCESS);
+  } catch (error) {
+    ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
+    next(createCriticalError(error, CODE.TERMINATE_SESSIONS_FAILURES, MSG.TERMINATE_SESSIONS_FAILURES, StatusCodes.INTERNAL_SERVER_ERROR));
+  }
+};
+
 module.exports = {
   devController,
   roleController: {
@@ -250,5 +263,6 @@ module.exports = {
     removeController,
     cancelRemoveController,
     terminateSessionsController,
+    terminateSessionController,
   },
 };

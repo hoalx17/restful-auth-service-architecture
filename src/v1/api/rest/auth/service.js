@@ -17,6 +17,7 @@ const {
   updateManyByCondition,
   removeById,
   removeManyByCondition,
+  removeOneByCondition,
 } = require("./repository");
 const { ON_RELEASE } = require("../../../../../constant");
 const { CODE, MSG, ERR } = require("./constant");
@@ -181,7 +182,19 @@ const ensureCanMakeNewSession = async (payload) => {
     return accessSignatures.length < parseInt(MAX_ALLOW_SESSION);
   } catch (error) {
     ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
-    throwCriticalError(error, CODE.ENSURE_CAN_MAKE_SESSION, MSG.ENSURE_CAN_MAKE_SESSION, StatusCodes.INTERNAL_SERVER_ERROR);
+    throwCriticalError(error, CODE.ENSURE_CAN_MAKE_SESSION_FAILURE, MSG.ENSURE_CAN_MAKE_SESSION_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
+const ensureNotCurrentSession = async (id, payload) => {
+  try {
+    const { accessSignature, id: userId } = payload;
+    const targetSessionId = hashids.decode(id)[0] || 0;
+    const currentSession = await findOneByCondition({ access_signature: accessSignature, user_id: userId }, UserVerifySignature);
+    return targetSessionId !== currentSession.id;
+  } catch (error) {
+    ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.ENSURE_NOT_CURRENT_SESSION_FAILURE, MSG.ENSURE_NOT_CURRENT_SESSION_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -307,7 +320,7 @@ const me = async (payload) => {
 
 const getSessions = async (payload) => {
   try {
-    const { id } = payload;
+    const { id, accessSignature } = payload;
     const { count, rows } = await findManyTargetByCondition(
       {
         user_id: id,
@@ -320,6 +333,7 @@ const getSessions = async (payload) => {
     );
     const sessions = rows.map((v, i, o) => ({
       id: hashids.encode(v.id),
+      current: v.accessSignature === accessSignature,
       createdAt: v.created_at,
       expiredAt: v.accessSignatureExpiredAt,
       refreshExpiredAt: v.refreshSignatureExpiredAt,
@@ -434,6 +448,26 @@ const terminateSessions = async (payload) => {
   }
 };
 
+const terminateSession = async (id, payload) => {
+  try {
+    const { id: currentUserId } = payload;
+    const targetSessionId = hashids.decode(id)[0] || 0;
+    const isNotCurrentSession = await ensureNotCurrentSession(id, payload);
+    if (!isNotCurrentSession) {
+      const error = newServerError(ERR.CANNOT_TERMINAL_CURRENT_SESSION);
+      ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+      throwCriticalError(error, CODE.CANNOT_TERMINAL_CURRENT_SESSION, MSG.CANNOT_TERMINAL_CURRENT_SESSION, StatusCodes.FORBIDDEN);
+    } else {
+      const session = await removeOneByCondition({ user_id: currentUserId, id: targetSessionId }, UserVerifySignature);
+      console.log(session);
+      return { id: hashids.encode(session.id) };
+    }
+  } catch (error) {
+    ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.TERMINATE_SESSION_FAILURES, MSG.TERMINATE_SESSION_FAILURES, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
 module.exports = {
   core: {
     findTargetById,
@@ -449,6 +483,7 @@ module.exports = {
   util: {
     ensureLegalSession,
     ensureCanMakeNewSession,
+    ensureNotCurrentSession,
   },
   auth: {
     signUp,
@@ -461,5 +496,6 @@ module.exports = {
     remove,
     cancelRemove,
     terminateSessions,
+    terminateSession,
   },
 };

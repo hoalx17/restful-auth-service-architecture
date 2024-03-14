@@ -99,6 +99,26 @@ const updateById = async (id, target, model, options) => {
   }
 };
 
+const updateOneByCondition = async (where, target, model, options) => {
+  try {
+    const old = await findOneByCondition(where, model, options);
+    if (_.isEmpty(old)) {
+      const error = newServerError(ERR.NOT_MODIFIED);
+      ON_RELEASE || console.log(`Repository: ${chalk.red(error.message)}`);
+      throwCriticalError(error, CODE.NOT_MODIFY, MSG.NOT_MODIFY, StatusCodes.NOT_MODIFIED);
+    }
+    await old.update(target, {
+      ...options,
+      where,
+      individualHooks: true,
+    });
+    return old;
+  } catch (error) {
+    ON_RELEASE || console.log(`Repository: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.UPDATE_FAILURE, MSG.UPDATE_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
 const updateManyByCondition = async (where, target, model, options) => {
   try {
     const old = await model.findAll({
@@ -110,7 +130,7 @@ const updateManyByCondition = async (where, target, model, options) => {
       ON_RELEASE || console.log(`Repository: ${chalk.red(error.message)}`);
       throwCriticalError(error, CODE.NOT_MODIFY, MSG.NOT_MODIFY, StatusCodes.NOT_MODIFIED);
     }
-    await model.update(target, {
+    await old.update(target, {
       ...options,
       where,
       individualHooks: true,
@@ -134,6 +154,23 @@ const removeById = async (id, model, options) => {
       ...options,
       where: { id },
     });
+    return old;
+  } catch (error) {
+    ON_RELEASE || console.log(`Repository: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.DELETE_FAILURE, MSG.DELETE_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
+const removeOneByCondition = async (where, model, options) => {
+  try {
+    const old = await findOneByCondition(where, model, options);
+    console.log({ where, old });
+    if (_.isEmpty(old)) {
+      const error = newServerError(ERR.NOT_MODIFIED);
+      ON_RELEASE || console.log(`Repository: ${chalk.red(error.message)}`);
+      throwCriticalError(error, CODE.NOT_MODIFY, MSG.NOT_MODIFY, StatusCodes.NOT_MODIFIED);
+    }
+    await old.destroy();
     return old;
   } catch (error) {
     ON_RELEASE || console.log(`Repository: ${chalk.red(error.message)}`);
@@ -170,7 +207,9 @@ module.exports = {
   saveOne,
   saveMany,
   updateById,
+  updateOneByCondition,
   updateManyByCondition,
   removeById,
+  removeOneByCondition,
   removeManyByCondition,
 };

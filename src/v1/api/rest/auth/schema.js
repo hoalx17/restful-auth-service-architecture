@@ -47,9 +47,7 @@ const joiUserCreate = Joi.object({
   confirmCode: Joi.string().required().messages({
     "any.required": SCHEMA.USER_CONFIRM_CODE_MUST_NOT_EMPTY,
   }),
-  isPendingDelete: Joi.boolean().required().messages({
-    "any.required": SCHEMA.USER_IS_PENDING_DELETE_MUST_NOT_EMPTY,
-  }),
+  isPendingDelete: Joi.boolean().optional(),
 });
 
 const joiUserUpdate = Joi.object({
@@ -61,9 +59,7 @@ const joiUserUpdate = Joi.object({
   activated: Joi.boolean().optional().messages({
     boolean: SCHEMA.USER_ACTIVATED_STATUS_MUST_BE_BOOLEAN,
   }),
-  isPendingDelete: Joi.boolean().required().messages({
-    "any.required": SCHEMA.USER_IS_PENDING_DELETE_MUST_NOT_EMPTY,
-  }),
+  isPendingDelete: Joi.boolean().optional(),
 });
 
 const joiUserVerifySignatureCreate = Joi.object({

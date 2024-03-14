@@ -44,10 +44,12 @@ const responseTransform = (res) => {
     }
     const { id, password, fingerprint, confirmCode, created_at, updated_at, deleted_at, roles, ...response } = res;
     response.id = hashids.encode(id);
-    response.roles = roles.map((v, i, o) => ({
-      ...v,
-      id: hashids.encode(v.id),
-    }));
+    if (roles) {
+      response.roles = roles.map((v, i, o) => ({
+        ...v,
+        id: hashids.encode(v.id),
+      }));
+    }
     return response;
   } catch (error) {
     ON_RELEASE || console.log(`Transform: ${chalk.red(error.message)}`);
