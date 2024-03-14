@@ -2,6 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const { StatusCodes } = require("http-status-codes");
+const passport = require("passport");
 
 const { roleController, devController, authController } = require("./controller");
 const {
@@ -36,9 +37,10 @@ roleRouter.patch("/:id", roleController.updateRoleByIdController);
 roleRouter.delete("/:id", roleController.removeRoleByIdController);
 
 /** Auth Router */
-router.get("/dev", middleware.requireSignIn, devController);
+router.get("/dev", passport.authenticate("jwt", { session: false }), devController);
 router.use("/roles", roleRouter);
 
+/**
 router.post("/sign-up", upload.single("imageUrl"), authController.signUpController);
 router.patch("/activate", authController.activateController);
 router.post("/sign-in", authController.signInController);
@@ -54,5 +56,22 @@ router.delete("/sessions/:id", middleware.requireSignIn, authController.terminat
 router.patch("/reset-password", authController.resetPasswordController);
 router.patch("/change-password", middleware.requireSignIn, authController.changePasswordController);
 router.patch("/refresh", middleware.requireSignIn, authController.refreshController);
+*/
+
+router.post("/sign-up", upload.single("imageUrl"), authController.signUpController);
+router.patch("/activate", authController.activateController);
+router.post("/sign-in", authController.signInController);
+router.get("/me", passport.authenticate("jwt", { session: false }), authController.meController);
+router.patch("/me", upload.single("imageUrl"), passport.authenticate("jwt", { session: false }), authController.updateProfileController);
+router.patch("/deactivate", passport.authenticate("jwt", { session: false }), authController.deactivateController);
+router.delete("/sign-out", passport.authenticate("jwt", { session: false }), authController.signOutController);
+router.delete("/delete", passport.authenticate("jwt", { session: false }), authController.removeController);
+router.patch("/cancel-delete", passport.authenticate("jwt", { session: false }), authController.cancelRemoveController);
+router.get("/sessions", passport.authenticate("jwt", { session: false }), authController.getSessionsController);
+router.delete("/sessions", passport.authenticate("jwt", { session: false }), authController.terminateSessionsController);
+router.delete("/sessions/:id", passport.authenticate("jwt", { session: false }), authController.terminateSessionController);
+router.patch("/reset-password", authController.resetPasswordController);
+router.patch("/change-password", passport.authenticate("jwt", { session: false }), authController.changePasswordController);
+router.patch("/refresh", passport.authenticate("jwt", { session: false }), authController.refreshController);
 
 module.exports = router;

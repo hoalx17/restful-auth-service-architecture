@@ -353,12 +353,7 @@ const getSessions = async (payload) => {
 
 const deactivate = async (password, payload) => {
   try {
-    truthyValidator(
-      ERR.USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY,
-      CODE.USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY,
-      MSG.USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY,
-      password
-    );
+    truthyValidator(ERR.USERNAME_OR_PASSWORD_MUST_NOT_EMPTY, CODE.USERNAME_OR_PASSWORD_MUST_NOT_EMPTY, MSG.USERNAME_OR_PASSWORD_MUST_NOT_EMPTY, password);
     const { id, hashedPassword } = payload;
     const isPasswordMatch = await bcrypt.compare(password, hashedPassword);
     if (!isPasswordMatch) {

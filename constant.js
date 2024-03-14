@@ -19,6 +19,10 @@ module.exports = {
     SEQUELIZE_CONNECTION_ESTABLISHED_SUCCESS: "Sequelize connection has been established successfully!",
     SEQUELIZE_CONNECTION_ESTABLISHED_FAILURE: "Unable to connect to the database via Sequelize!",
 
+    /** Passport Constant */
+    PASSPORT_ESTABLISHED_SUCCESS: "Passport authentication has been established successfully",
+    PASSPORT_ESTABLISHED_FAILURE: "Unable to configure passport authentication",
+
     /** Route Constant */
     ROUTE_ENDPOINT_ESTABLISHED_SUCCESS: "Route endpoint has been established successfully!",
     ROUTE_ENDPOINT_ESTABLISHED_FAILURE: "Unable to configure route endpoint!",
