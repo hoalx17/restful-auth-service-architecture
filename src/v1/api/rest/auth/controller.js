@@ -243,6 +243,18 @@ const terminateSessionController = async (req, res, next) => {
   }
 };
 
+const resetPasswordController = async (req, res, next) => {
+  try {
+    const { username, confirmCode } = req.query;
+    const { password } = req.body;
+    const old = await auth.resetPassword(username, confirmCode, password);
+    responseUpdate(res, old, MSG.RESET_PASSWORD_SUCCESS);
+  } catch (error) {
+    ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
+    next(createCriticalError(error, CODE.RESET_PASSWORD_FAILURE, MSG.RESET_PASSWORD_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR));
+  }
+};
+
 module.exports = {
   devController,
   roleController: {
@@ -264,5 +276,6 @@ module.exports = {
     cancelRemoveController,
     terminateSessionsController,
     terminateSessionController,
+    resetPasswordController,
   },
 };

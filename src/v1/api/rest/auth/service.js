@@ -448,6 +448,23 @@ const terminateSessions = async (payload) => {
   }
 };
 
+const terminateAllSessions = async (payload) => {
+  try {
+    const { id } = payload;
+    const terminateSession = await removeManyByCondition(
+      {
+        user_id: id,
+      },
+      UserVerifySignature
+    );
+    const sessions = terminateSession.map((v, i, o) => ({ id: hashids.encode(v.id) }));
+    return { count: sessions.length, sessions };
+  } catch (error) {
+    ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.TERMINATE_ALL_SESSIONS_FAILURES, MSG.TERMINATE_ALL_SESSIONS_FAILURES, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
 const terminateSession = async (id, payload) => {
   try {
     const { id: currentUserId } = payload;
@@ -465,6 +482,36 @@ const terminateSession = async (id, payload) => {
   } catch (error) {
     ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
     throwCriticalError(error, CODE.TERMINATE_SESSION_FAILURES, MSG.TERMINATE_SESSION_FAILURES, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
+const resetPassword = async (username, confirmCode, password, payload) => {
+  try {
+    truthyValidator(
+      ERR.USERNAME_PASSWORD_OR_CONFIRM_CODE_MUST_NOT_EMPTY,
+      CODE.USERNAME_PASSWORD_OR_CONFIRM_CODE_MUST_NOT_EMPTY,
+      MSG.USERNAME_PASSWORD_OR_CONFIRM_CODE_MUST_NOT_EMPTY,
+      username,
+      confirmCode,
+      password
+    );
+    const requestUser = await findOneByCondition({ username, activated: true }, User);
+    if (_.isEmpty(requestUser)) {
+      const error = newServerError(ERR.PROFILE_NOT_FOUND);
+      ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+      throwCriticalError(error, CODE.PROFILE_NOT_FOUND, MSG.PROFILE_NOT_FOUND, StatusCodes.BAD_REQUEST);
+    } else if (confirmCode !== requestUser.confirmCode) {
+      const error = newServerError(ERR.CONFIRM_CODE_NOT_MATCH);
+      ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+      throwCriticalError(error, CODE.CONFIRM_CODE_NOT_MATCH, MSG.CONFIRM_CODE_NOT_MATCH, StatusCodes.BAD_REQUEST);
+    } else {
+      const old = await updateById(requestUser.id, { password }, User);
+      await terminateAllSessions({ id: requestUser.id });
+      return old;
+    }
+  } catch (error) {
+    ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.RESET_PASSWORD_FAILURE, MSG.RESET_PASSWORD_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -497,5 +544,6 @@ module.exports = {
     cancelRemove,
     terminateSessions,
     terminateSession,
+    resetPassword,
   },
 };

@@ -8,6 +8,7 @@ module.exports = {
     VALIDATE_FAILURE: "ERR_AUTH_VALIDATION_1",
     USERNAME_OR_PASSWORD_MUST_NOT_EMPTY: "ERR_AUTH_VALIDATION_2",
     USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY: "ERR_AUTH_VALIDATION_3",
+    USERNAME_PASSWORD_OR_CONFIRM_CODE_MUST_NOT_EMPTY: "ERR_AUTH_VALIDATION_4",
 
     /** Repository */
     QUERY_FAILURE: "ERR_AUTH_REPOSITORY_1",
@@ -57,6 +58,7 @@ module.exports = {
     ENSURE_NOT_CURRENT_SESSION_FAILURE: "ERR_AUTH_SERVICE_24",
     CANNOT_TERMINAL_CURRENT_SESSION: "ERR_AUTH_SERVICE_25",
     RESET_PASSWORD_FAILURE: "ERR_AUTH_SERVICE_27",
+    TERMINATE_ALL_SESSIONS_FAILURES: "ERR_AUTH_SERVICE_28",
 
     /** Token */
     SIGN_TOKEN_FAILURE: "ERR_AUTH_TOKEN_1",
@@ -73,6 +75,7 @@ module.exports = {
     VALIDATOR_FAILURE: "Validator on Schema return failure result!",
     USERNAME_OR_PASSWORD_MUST_NOT_EMPTY: "Username or password params must not be empty!",
     USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY: "Username or confirmCode params must not be empty!",
+    USERNAME_PASSWORD_OR_CONFIRM_CODE_MUST_NOT_EMPTY: "Username, password or confirmCode params must not be empty!",
 
     /** Repository */
     QUERY_FAILURE: "Query resource failure!",
@@ -143,6 +146,7 @@ module.exports = {
     TERMINATE_SESSION_SUCCESS: "Terminal activate session success!",
     CANNOT_TERMINAL_CURRENT_SESSION: "Cannot terminal current session!",
     RESET_PASSWORD_FAILURE: "Reset password of profile failure!",
+    TERMINATE_ALL_SESSIONS_FAILURES: "Terminal all session of current user failure!",
     RESET_PASSWORD_SUCCESS: "Reset password of profile success!",
 
     /** Token */
@@ -156,6 +160,7 @@ module.exports = {
     NOT_MODIFIED: "not modified because no content found",
     USERNAME_OR_PASSWORD_MUST_NOT_EMPTY: "username or password must not empty",
     USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY: "username or confirmCode must not empty",
+    USERNAME_PASSWORD_OR_CONFIRM_CODE_MUST_NOT_EMPTY: "username, password or confirmCode must not empty",
     CONFIRM_CODE_NOT_MATCH: "confirmCode does not match",
     PROFILE_NOT_FOUND: "profile not found: wrong username or password",
     USERNAME_OR_PASSWORD_NOT_MATCH: "username or password not match",
