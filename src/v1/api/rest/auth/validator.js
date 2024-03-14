@@ -1,5 +1,4 @@
 const chalk = require("chalk");
-const _ = require("lodash");
 const { StatusCodes } = require("http-status-codes");
 
 const { CODE, MSG } = require("./constant");

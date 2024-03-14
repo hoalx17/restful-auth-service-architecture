@@ -4,7 +4,7 @@ const _ = require("lodash");
 const { StatusCodes } = require("http-status-codes");
 const { v4: uuidv4 } = require("uuid");
 
-const { CODE, MSG } = require("./constant");
+const { CODE, MSG, USER_RESOURCE_NAME, ROLE_RESOURCE_NAME } = require("./constant");
 const { throwCriticalError } = require("../../../error");
 const { ON_RELEASE } = require("../../../../../constant");
 
@@ -37,37 +37,52 @@ const requestTransform = (req) => {
   }
 };
 
-const responseTransform = (res) => {
+const responseTransform = (res, resourceName) => {
   try {
     if (_.isEmpty(res)) {
       return res;
     }
-    const { id, password, fingerprint, confirmCode, created_at, updated_at, deleted_at, roles, ...response } = res;
-    response.id = hashids.encode(id);
-    if (roles) {
-      response.roles = roles.map((v, i, o) => ({
-        ...v,
-        id: hashids.encode(v.id),
-      }));
+    if (USER_RESOURCE_NAME === resourceName) {
+      const { id, password, fingerprint, confirmCode, created_at, updated_at, deleted_at, roles, ...response } = res;
+      response.id = hashids.encode(id);
+      if (roles) {
+        response.roles = roles.map((v, i, o) => ({
+          ...v,
+          id: hashids.encode(v.id),
+        }));
+      }
+      return response;
+    } else if (ROLE_RESOURCE_NAME === resourceName) {
+      const { id, created_at, updated_at, deleted_at, ...response } = res;
+      response.id = hashids.encode(id);
+      return response;
     }
-    return response;
   } catch (error) {
     ON_RELEASE || console.log(`Transform: ${chalk.red(error.message)}`);
     throwCriticalError(error, CODE.RESPONSE_TRANSFORM_FAILURE, MSG.RESPONSE_TRANSFORM_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
   }
 };
 
-const responseTransformMany = (res) => {
+const responseTransformMany = (res, resourceName) => {
   try {
     if (_.isEmpty(res)) {
       return res;
     }
-    const response = res.map((v, i, o) => {
-      const { id, password, fingerprint, confirmCode, created_at, updated_at, deleted_at, ...response } = v;
-      response.id = hashids.encode(id);
+    if (USER_RESOURCE_NAME === resourceName) {
+      const response = res.map((v, i, o) => {
+        const { id, password, fingerprint, confirmCode, created_at, updated_at, deleted_at, ...response } = v;
+        response.id = hashids.encode(id);
+        return response;
+      });
       return response;
-    });
-    return response;
+    } else if (ROLE_RESOURCE_NAME === resourceName) {
+      const response = res.map((v, i, o) => {
+        const { id, created_at, updated_at, deleted_at, ...response } = v;
+        response.id = hashids.encode(id);
+        return response;
+      });
+      return response;
+    }
   } catch (error) {
     ON_RELEASE || console.log(`Transform: ${chalk.red(error.message)}`);
     throwCriticalError(error, CODE.RESPONSE_TRANSFORM_FAILURE, MSG.RESPONSE_TRANSFORM_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);

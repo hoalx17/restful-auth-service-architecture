@@ -4,7 +4,7 @@ const Hashids = require("hashids");
 
 const { core, auth } = require("./service");
 const { ON_RELEASE } = require("../../../../../constant");
-const { CODE, MSG } = require("./constant");
+const { CODE, MSG, ROLE_RESOURCE_NAME, USER_RESOURCE_NAME } = require("./constant");
 const { requestTransform, roleTransform, userTransform, responseTransform } = require("./transform");
 const { Role } = require("./model");
 const {
@@ -17,7 +17,6 @@ const {
   responseSave,
   responseUpdate,
   responseRemove,
-  responseSignIn,
   responseFindOrigin,
   responseFindManyOrigin,
 } = require("./response");
@@ -41,7 +40,7 @@ const findRoleByIdController = async (req, res, next) => {
     req = requestTransform(req);
     const { id } = req.params;
     const target = await core.findTargetById(id, Role);
-    responseFindById(res, target);
+    responseFindById(res, target, undefined, ROLE_RESOURCE_NAME);
   } catch (error) {
     ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
     next(createCriticalError(error, CODE.QUERY_TARGET_FAILURE, MSG.QUERY_TARGET_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR));
@@ -56,7 +55,7 @@ const findManyRoleByConditionController = async (req, res, next) => {
     const paginate = { page: parseInt(page), size: parseInt(size), cursor };
     Object.keys(cond).forEach((v, i, o) => cond[v] || delete cond[v]);
     const { count, rows } = await core.findManyTargetByCondition(cond, paginate, Role);
-    responseFindManyByCondition(res, count, rows, paginate, cursor);
+    responseFindManyByCondition(res, count, rows, paginate, cursor, undefined, ROLE_RESOURCE_NAME);
   } catch (error) {
     ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
     next(createCriticalError(error, CODE.QUERY_TARGET_MANY_FAILURE, MSG.QUERY_TARGET_MANY_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR));
@@ -73,7 +72,7 @@ const saveRoleController = async (req, res, next) => {
       const targets = roleTransform.multiCreationRoleTransform(req);
       saved = await core.saveManyTarget(targets, joiRoleCreate, Role);
     }
-    responseSave(res, saved);
+    responseSave(res, saved, undefined, ROLE_RESOURCE_NAME);
   } catch (error) {
     ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
     next(createCriticalError(error, CODE.CREATE_TARGET_FAILURE, MSG.CREATE_TARGET_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR));
@@ -113,7 +112,7 @@ const signUpController = async (req, res, next) => {
     const targetRoleId = hashids.decode(roleId)[0] || 1;
     const imageBuffer = req.file?.buffer;
     const saved = await auth.signUp(target, targetRoleId, imageBuffer);
-    responseSave(res, saved, MSG.SIGNUP_SUCCESS);
+    responseSave(res, saved, MSG.SIGNUP_SUCCESS, USER_RESOURCE_NAME);
   } catch (error) {
     ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
     next(createCriticalError(error, CODE.SIGNUP_FAILURE, MSG.SIGNUP_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR));
@@ -135,7 +134,7 @@ const signInController = async (req, res, next) => {
   try {
     const { username, password } = req.body;
     const { accessToken, refreshToken } = await auth.signIn(username, password);
-    responseSignIn(res, { accessToken, refreshToken });
+    responseFindOrigin(res, { accessToken, refreshToken }, MSG.SIGN_IN_SUCCESS);
   } catch (error) {
     ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
     next(createCriticalError(error, CODE.SIGN_IN_FAILURE, MSG.SIGN_IN_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR));
@@ -147,7 +146,7 @@ const meController = async (req, res, next) => {
     const { username } = req.user;
     const payload = { username };
     const requestUser = await auth.me(payload);
-    const user = responseTransform(requestUser.toJSON());
+    const user = responseTransform(requestUser.toJSON(), USER_RESOURCE_NAME);
     responseFindOrigin(res, user, MSG.GET_PROFILE_INFO_SUCCESS);
   } catch (error) {
     ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
@@ -197,7 +196,7 @@ const removeController = async (req, res, next) => {
     const { password } = req.body;
     const { id, username, hashedPassword } = req.user;
     const payload = { id, hashedPassword, username };
-    const { old, removeOn } = await auth.remove(username, password, payload);
+    const { old, removeOn } = await auth.remove(password, payload);
     responseRemove(res, { username: old.username, removeOn }, MSG.DELETE_PROFILE_SUCCESS);
   } catch (error) {
     ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
@@ -232,10 +231,10 @@ const terminateSessionsController = async (req, res, next) => {
 
 const terminateSessionController = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const { id: userId, accessSignature } = req.user;
-    const payload = { id: userId, accessSignature };
-    const session = await auth.terminateSession(id, payload);
+    const { id: sessionId } = req.params;
+    const { id, accessSignature, sessionId: currentSessionId } = req.user;
+    const payload = { id, accessSignature, sessionId: currentSessionId };
+    const session = await auth.terminateSession(sessionId, payload);
     responseRemove(res, session, MSG.TERMINATE_SESSION_SUCCESS);
   } catch (error) {
     ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
@@ -252,6 +251,18 @@ const resetPasswordController = async (req, res, next) => {
   } catch (error) {
     ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
     next(createCriticalError(error, CODE.RESET_PASSWORD_FAILURE, MSG.RESET_PASSWORD_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR));
+  }
+};
+
+const refreshController = async (req, res, next) => {
+  try {
+    const { id, username, accessSignature, refreshSignature } = req.user;
+    const payload = { id, username, accessSignature, refreshSignature };
+    const { newAccessToken, newRefreshToken } = await auth.refresh(payload);
+    responseFindOrigin(res, { newAccessToken, newRefreshToken }, MSG.REFRESH_SESSION_SUCCESS);
+  } catch (error) {
+    ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
+    next(createCriticalError(error, CODE.REFRESH_SESSION_FAILURE, MSG.REFRESH_SESSION_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR));
   }
 };
 
@@ -277,5 +288,6 @@ module.exports = {
     terminateSessionsController,
     terminateSessionController,
     resetPasswordController,
+    refreshController,
   },
 };

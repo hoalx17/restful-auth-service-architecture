@@ -87,9 +87,8 @@ const updateById = async (id, target, model, options) => {
       ON_RELEASE || console.log(`Repository: ${chalk.red(error.message)}`);
       throwCriticalError(error, CODE.NOT_MODIFY, MSG.NOT_MODIFY, StatusCodes.NOT_MODIFIED);
     }
-    await model.update(target, {
+    await old.update(target, {
       ...options,
-      where: { id },
       individualHooks: true,
     });
     return old;
@@ -109,7 +108,6 @@ const updateOneByCondition = async (where, target, model, options) => {
     }
     await old.update(target, {
       ...options,
-      where,
       individualHooks: true,
     });
     return old;
@@ -121,6 +119,7 @@ const updateOneByCondition = async (where, target, model, options) => {
 
 const updateManyByCondition = async (where, target, model, options) => {
   try {
+    // TODO: Do not use sequelize directly
     const old = await model.findAll({
       ...options,
       where,
@@ -132,7 +131,6 @@ const updateManyByCondition = async (where, target, model, options) => {
     }
     await old.update(target, {
       ...options,
-      where,
       individualHooks: true,
     });
     return old;
@@ -150,9 +148,8 @@ const removeById = async (id, model, options) => {
       ON_RELEASE || console.log(`Repository: ${chalk.red(error.message)}`);
       throwCriticalError(error, CODE.NOT_MODIFY, MSG.NOT_MODIFY, StatusCodes.NOT_MODIFIED);
     }
-    await model.destroy({
+    await old.destroy({
       ...options,
-      where: { id },
     });
     return old;
   } catch (error) {
@@ -164,7 +161,6 @@ const removeById = async (id, model, options) => {
 const removeOneByCondition = async (where, model, options) => {
   try {
     const old = await findOneByCondition(where, model, options);
-    console.log({ where, old });
     if (_.isEmpty(old)) {
       const error = newServerError(ERR.NOT_MODIFIED);
       ON_RELEASE || console.log(`Repository: ${chalk.red(error.message)}`);

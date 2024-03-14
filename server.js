@@ -25,7 +25,7 @@ const serverConfig = async (app) => {
       parameters: [Fingerprint.useragent, Fingerprint.acceptHeaders, Fingerprint.geoip],
     })
   );
-  ON_RELEASE || app.use(morgan("combined"));
+  app.use(morgan("combined"));
 
   /* Database Connection */
   try {

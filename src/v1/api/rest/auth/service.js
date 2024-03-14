@@ -26,7 +26,7 @@ const { createValidator, updateValidator, truthyValidator } = require("./validat
 const { CloudinaryUtils } = require("../../../util");
 const { User, Role, UserVerifySignature } = require("./model");
 const {
-  userSchema: { joiUserCreate, joiUserUpdate },
+  userSchema: { joiUserCreate },
 } = require("./schema");
 const { signToken } = require("./token");
 
@@ -149,7 +149,7 @@ const removeTargetManyByCondition = async (where, model, options) => {
 const ensureLegalSession = async (payload) => {
   try {
     const { id, accessSignature } = payload;
-    const { count, rows: accessSignatures } = await findManyTargetByCondition(
+    const { rows: accessSignatures } = await findManyTargetByCondition(
       {
         user_id: id,
         access_signature_expired_at: {
@@ -159,7 +159,14 @@ const ensureLegalSession = async (payload) => {
       { page: 1, size: parseInt(MAX_ALLOW_SESSION) },
       UserVerifySignature
     );
-    return accessSignatures.some((v, i, o) => v.toJSON().accessSignature === accessSignature);
+    const session = accessSignatures.find((v, i, o) => v.toJSON().accessSignature === accessSignature);
+    if (!session) {
+      const error = newServerError(ERR.ILLEGAL_SESSION);
+      ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+      throwCriticalError(error, CODE.ILLEGAL_SESSION, MSG.ILLEGAL_SESSION, StatusCodes.FORBIDDEN);
+    }
+    const isCanMakeNewSession = accessSignatures.length < parseInt(MAX_ALLOW_SESSION);
+    return { isLegalSession: !!session, sessionId: session.id, isCanMakeNewSession };
   } catch (error) {
     ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
     throwCriticalError(error, CODE.ENSURE_LEGAL_SESSION_FAILURE, MSG.ENSURE_LEGAL_SESSION_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
@@ -186,12 +193,11 @@ const ensureCanMakeNewSession = async (payload) => {
   }
 };
 
-const ensureNotCurrentSession = async (id, payload) => {
+const ensureNotCurrentSession = async (sessionId, payload) => {
   try {
-    const { accessSignature, id: userId } = payload;
-    const targetSessionId = hashids.decode(id)[0] || 0;
-    const currentSession = await findOneByCondition({ access_signature: accessSignature, user_id: userId }, UserVerifySignature);
-    return targetSessionId !== currentSession.id;
+    const { sessionId: currentSessionId } = payload;
+    const targetSessionId = hashids.decode(sessionId)[0] || 0;
+    return targetSessionId !== currentSessionId;
   } catch (error) {
     ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
     throwCriticalError(error, CODE.ENSURE_NOT_CURRENT_SESSION_FAILURE, MSG.ENSURE_NOT_CURRENT_SESSION_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
@@ -347,21 +353,21 @@ const getSessions = async (payload) => {
 
 const deactivate = async (password, payload) => {
   try {
-    const { id, hashedPassword } = payload;
     truthyValidator(
       ERR.USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY,
       CODE.USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY,
       MSG.USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY,
       password
     );
+    const { id, hashedPassword } = payload;
     const isPasswordMatch = await bcrypt.compare(password, hashedPassword);
     if (!isPasswordMatch) {
       const error = newServerError(ERR.USERNAME_OR_PASSWORD_NOT_MATCH);
       ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
       throwCriticalError(error, CODE.USERNAME_OR_PASSWORD_NOT_MATCH, MSG.USERNAME_OR_PASSWORD_NOT_MATCH, StatusCodes.BAD_REQUEST);
     } else {
-      await removeManyByCondition({ user_id: userId }, UserVerifySignature);
-      const old = await updateById(userId, { activated: false }, User);
+      await removeManyByCondition({ user_id: id }, UserVerifySignature);
+      const old = await updateById(id, { activated: false }, User);
       return old;
     }
   } catch (error) {
@@ -383,8 +389,8 @@ const signOut = async (payload) => {
 
 const remove = async (password, payload) => {
   try {
-    const { id, hashedPassword, username } = payload;
     truthyValidator(ERR.USERNAME_OR_PASSWORD_MUST_NOT_EMPTY, CODE.USERNAME_OR_PASSWORD_MUST_NOT_EMPTY, MSG.USERNAME_OR_PASSWORD_MUST_NOT_EMPTY, password);
+    const { id, hashedPassword, username } = payload;
     const isPasswordMatch = await bcrypt.compare(password, hashedPassword);
     if (!isPasswordMatch) {
       const error = newServerError(ERR.USERNAME_OR_PASSWORD_NOT_MATCH);
@@ -394,6 +400,7 @@ const remove = async (password, payload) => {
       const old = await updateById(id, { isPendingDelete: true }, User);
       const removeOn = new Date(Date.now() + ms(SCHEDULE_DELETE_PROFILE_TIME));
       const scheduleJobName = `${username}ProfileDeleteTask`;
+      // TODO: Move schedule task function to another
       schedule.scheduleJob(scheduleJobName, removeOn, async () => {
         await removeManyByCondition({ user_id: id }, UserVerifySignature);
         await removeById(id, User);
@@ -461,22 +468,22 @@ const terminateAllSessions = async (payload) => {
     return { count: sessions.length, sessions };
   } catch (error) {
     ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
-    throwCriticalError(error, CODE.TERMINATE_ALL_SESSIONS_FAILURES, MSG.TERMINATE_ALL_SESSIONS_FAILURES, StatusCodes.INTERNAL_SERVER_ERROR);
+    throwCriticalError(error, CODE.TERMINATE_ALL_SESSIONS_FAILURE, MSG.TERMINATE_ALL_SESSIONS_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
   }
 };
 
-const terminateSession = async (id, payload) => {
+const terminateSession = async (sessionId, payload) => {
   try {
-    const { id: currentUserId } = payload;
-    const targetSessionId = hashids.decode(id)[0] || 0;
-    const isNotCurrentSession = await ensureNotCurrentSession(id, payload);
+    const { id } = payload;
+    const targetSessionId = hashids.decode(sessionId)[0] || 0;
+    const isNotCurrentSession = await ensureNotCurrentSession(sessionId, payload);
+    console.log(isNotCurrentSession);
     if (!isNotCurrentSession) {
       const error = newServerError(ERR.CANNOT_TERMINAL_CURRENT_SESSION);
       ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
       throwCriticalError(error, CODE.CANNOT_TERMINAL_CURRENT_SESSION, MSG.CANNOT_TERMINAL_CURRENT_SESSION, StatusCodes.FORBIDDEN);
     } else {
-      const session = await removeOneByCondition({ user_id: currentUserId, id: targetSessionId }, UserVerifySignature);
-      console.log(session);
+      const session = await removeOneByCondition({ user_id: id, id: targetSessionId }, UserVerifySignature);
       return { id: hashids.encode(session.id) };
     }
   } catch (error) {
@@ -515,6 +522,33 @@ const resetPassword = async (username, confirmCode, password, payload) => {
   }
 };
 
+const refresh = async (payload) => {
+  try {
+    const { id, username, accessSignature, refreshSignature } = payload;
+    truthyValidator(ERR.REFRESH_TOKEN_MUST_NOT_EMPTY, CODE.REFRESH_TOKEN_MUST_NOT_EMPTY, MSG.REFRESH_TOKEN_MUST_NOT_EMPTY, refreshSignature);
+    const signature = await findOneByCondition({ access_signature: accessSignature, user_id: id }, UserVerifySignature);
+    if (signature.refreshSignature !== refreshSignature) {
+      const error = newServerError(ERR.REFRESH_TOKEN_NOT_MATCH);
+      ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+      throwCriticalError(error, CODE.REFRESH_TOKEN_NOT_MATCH, MSG.REFRESH_TOKEN_NOT_MATCH, StatusCodes.BAD_REQUEST);
+    } else {
+      const payload = { username };
+      const [newAccessToken, newAccessSignature] = signToken(payload, JWT_ACCESS_TOKEN_LIFETIME, JWT_ACCESS_TOKEN_SECRET);
+      const [newRefreshToken, newRefreshSignature] = signToken(payload, JWT_REFRESH_TOKEN_LIFETIME, JWT_REFRESH_TOKEN_SECRET);
+      signature.update({
+        accessSignature: newAccessSignature,
+        accessSignatureExpiredAt: new Date(Date.now() + ms(JWT_ACCESS_TOKEN_LIFETIME)),
+        refreshSignature: newRefreshSignature,
+        refreshSignatureExpiredAt: new Date(Date.now() + ms(JWT_REFRESH_TOKEN_LIFETIME)),
+      });
+      return { newAccessToken, newRefreshToken };
+    }
+  } catch (error) {
+    ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.REFRESH_SESSION_FAILURE, MSG.REFRESH_SESSION_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
 module.exports = {
   core: {
     findTargetById,
@@ -529,7 +563,6 @@ module.exports = {
   },
   util: {
     ensureLegalSession,
-    ensureCanMakeNewSession,
     ensureNotCurrentSession,
   },
   auth: {
@@ -545,5 +578,6 @@ module.exports = {
     terminateSessions,
     terminateSession,
     resetPassword,
+    refresh,
   },
 };

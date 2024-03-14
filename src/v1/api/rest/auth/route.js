@@ -36,7 +36,7 @@ roleRouter.patch("/:id", roleController.updateRoleByIdController);
 roleRouter.delete("/:id", roleController.removeRoleByIdController);
 
 /** Auth Router */
-router.get("/dev", devController);
+router.get("/dev", middleware.requireSignIn, devController);
 router.use("/roles", roleRouter);
 
 router.post("/sign-up", upload.single("imageUrl"), authController.signUpController);
@@ -51,5 +51,6 @@ router.patch("/cancel-delete", middleware.requireSignIn, middleware.requirePendi
 router.delete("/sessions", middleware.requireSignIn, authController.terminateSessionsController);
 router.delete("/sessions/:id", middleware.requireSignIn, authController.terminateSessionController);
 router.patch("/reset-password", authController.resetPasswordController);
+router.patch("/refresh", middleware.requireSignIn, authController.refreshController);
 
 module.exports = router;

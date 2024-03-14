@@ -14,6 +14,7 @@ const { JWT_ACCESS_TOKEN_SECRET } = process.env;
 const requireSignIn = async (req, res, next) => {
   try {
     const [accessToken, accessSignature] = getTokenFromHeader(req, "Authorization");
+    const [refreshToken, refreshSignature] = getTokenFromHeader(req, "RefreshToken");
     const { username } = verifyToken(accessToken, JWT_ACCESS_TOKEN_SECRET);
     const requestUser = await core.findOneTargetByCondition({ username, activated: true }, User);
     if (_.isEmpty(requestUser)) {
@@ -21,19 +22,23 @@ const requireSignIn = async (req, res, next) => {
       ON_RELEASE || console.log(`Middleware: ${chalk.red(error.message)}`);
       throwCriticalError(error, CODE.PROFILE_NOT_FOUND, MSG.PROFILE_NOT_FOUND, StatusCodes.UNAUTHORIZED);
     } else {
-      const isValidSession = await util.ensureLegalSession({ accessSignature, id: requestUser.id });
-      if (!isValidSession) {
-        const error = newServerError(ERR.SIGNATURE_NOT_MATCH);
+      const { isLegalSession, sessionId, isCanMakeNewSession } = await util.ensureLegalSession({ accessSignature, id: requestUser.id });
+      if (!isLegalSession) {
+        const error = newServerError(ERR.ILLEGAL_SESSION);
         ON_RELEASE || console.log(`Middleware: ${chalk.red(error.message)}`);
-        throwCriticalError(error, CODE.SIGNATURE_NOT_MATCH, MSG.SIGNATURE_NOT_MATCH, StatusCodes.UNAUTHORIZED);
+        throwCriticalError(error, CODE.ILLEGAL_SESSION, MSG.ILLEGAL_SESSION, StatusCodes.UNAUTHORIZED);
       }
       req.user = {
-        id: requestUser.id,
+        refreshSignature,
+
         username,
+        id: requestUser.id,
         hashedPassword: requestUser.password,
         confirmCode: requestUser.confirmCode,
-        accessSignature,
         isPendingDelete: requestUser.isPendingDelete,
+        sessionId: sessionId,
+        accessSignature,
+        isCanMakeNewSession,
       };
       next();
     }
@@ -54,7 +59,7 @@ const requirePendingDelete = async (req, res, next) => {
     next();
   } catch (error) {
     ON_RELEASE || console.log(`Middleware: ${chalk.red(error.message)}`);
-    next(createCriticalError(error, CODE.REQUIRED_PENDING_DELETE, MSG.REQUIRED_PENDING_DELETE, StatusCodes.UNAUTHORIZED));
+    next(createCriticalError(error, CODE.REQUIRED_PENDING_DELETE_TO_CONTINUE, MSG.REQUIRED_PENDING_DELETE_TO_CONTINUE, StatusCodes.FORBIDDEN));
   }
 };
 

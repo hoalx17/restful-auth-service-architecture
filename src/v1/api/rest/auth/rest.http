@@ -1,34 +1,35 @@
 @HOST = http://localhost:3000/api/v1/auth
 @NOW = {{$datetime iso8601}}
-@ACCESS_TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImhvYWx4MTciLCJpYXQiOjE3MTAzODg1MDEsImV4cCI6MTcxMDM5MjEwMX0.G7mNVxoRLKFehikDYXtlImbsO9ir3LX9zSHvE7rQ0xc
-@REFRESH_TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImhvYWx4MTciLCJpYXQiOjE3MTAzODg1MDEsImV4cCI6MTcxMDQ3NDkwMX0.9scb82Z8Cno-99w7kOJYlf3tjE3XXsywLX9Hw3pvLNg
+@ACCESS_TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImhvYWx4MTciLCJpYXQiOjE3MTA0MDY3NzgsImV4cCI6MTcxMDQxMDM3OH0.W6RqyHdDXWjMoTvAPdBUz9mrZtTwObWp6uI8D-97Y3o
+@REFRESH_TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImhvYWx4MTciLCJpYXQiOjE3MTA0MDY3NzgsImV4cCI6MTcxMDQ5MzE3OH0.cg7hGMyD1j5pq-47wmEa2nP6VigMPw8TX8FQrwjF8N8
 
 GET {{HOST}}/health-check/ping
 ###
 GET {{HOST}}/dev
+Content-Type: application/json
+Authorization: Bearer {{ACCESS_TOKEN}}
 ###
 
-GET {{HOST}}/roles/GkDmBrmOl5
+GET {{HOST}}/roles/lJ8Y1poQ7L
 ###
-GET {{HOST}}/roles?page=30&size=30&name=vip
+GET {{HOST}}/roles?page=1&size=3&name=vip
 ###
 POST {{HOST}}/roles
 Content-Type: application/json
 
 [
     {
-        "name": "BANNED"
+        "name": "USER"
     },
     {
         "name": "VIP"
     }
 ]
 ###
-PATCH {{HOST}}/roles/KWko74YeBv
+PATCH {{HOST}}/roles/KWko74YeBV
 Content-Type: application/json
 
 {
-    "bulk": true,
     "name": "ADMINISTRATOR"
 }
 
@@ -41,19 +42,19 @@ POST {{HOST}}/sign-up
 Content-Type: application/json
 
 {
-    "username": "hoalx19",
-    "password": "hoalx19",
+    "username": "hoalx17",
+    "password": "hoalx17",
     "firstName": "Le",
     "lastName": "Xuan Hoa",
     "birthDay": "{{NOW}}",
     "gender": true,
-    "email": "hoalx19@gmail.com",
-    "tel": "0364015019",
+    "email": "hoalx17@gmail.com",
+    "tel": "0364015017",
     "roleId": "rJKE2zEQ1F"
 }
 
 ###
-PATCH {{HOST}}/activate?username=hoalx17&confirmCode=21189dd4-5625-44c1-85f8-e99c4e4a0b5a
+PATCH {{HOST}}/activate?username=hoalx17&confirmCode=266e2694-8e42-4527-8a46-369b265af7c7
 Content-Type: application/json
 
 ###
@@ -113,15 +114,21 @@ Content-Type: application/json
 Authorization: Bearer {{ACCESS_TOKEN}}
 
 ###
-DELETE {{HOST}}/sessions/GkDmBrmOl5
+DELETE {{HOST}}/sessions/lJ8Y1poQ7L
 Content-Type: application/json
 Authorization: Bearer {{ACCESS_TOKEN}}
 
 ###
-PATCH {{HOST}}/reset-password?username=hoalx17&confirmCode=c0164678-f70e-46b9-a560-f49c21afc8be
+PATCH {{HOST}}/reset-password?username=hoalx17&confirmCode=36937ae0-b235-4d0e-9fd6-b93ab63ff840
 Content-Type: application/json
 
 {
     "password": "hoalx18"
 }
+###
+PATCH {{HOST}}/refresh
+Content-Type: application/json
+Authorization: Bearer {{ACCESS_TOKEN}}
+RefreshToken: Bearer {{REFRESH_TOKEN}}
+
 ###
