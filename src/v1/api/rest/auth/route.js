@@ -52,6 +52,7 @@ router.get("/sessions", middleware.requireSignIn, authController.getSessionsCont
 router.delete("/sessions", middleware.requireSignIn, authController.terminateSessionsController);
 router.delete("/sessions/:id", middleware.requireSignIn, authController.terminateSessionController);
 router.patch("/reset-password", authController.resetPasswordController);
+router.patch("/change-password", middleware.requireSignIn, authController.changePasswordController);
 router.patch("/refresh", middleware.requireSignIn, authController.refreshController);
 
 module.exports = router;

@@ -13,6 +13,8 @@ module.exports = {
     USERNAME_OR_PASSWORD_MUST_NOT_EMPTY: "ERR_AUTH_VALIDATION_2",
     USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY: "ERR_AUTH_VALIDATION_3",
     USERNAME_PASSWORD_OR_CONFIRM_CODE_MUST_NOT_EMPTY: "ERR_AUTH_VALIDATION_4",
+    REFRESH_TOKEN_MUST_NOT_EMPTY: "ERR_AUTH_VALIDATION_5",
+    PASSWORD_OR_NEW_PASSWORD_MUST_NOT_EMPTY: "ERR_AUTH_VALIDATION_6",
 
     /** Repository */
     QUERY_FAILURE: "ERR_AUTH_REPOSITORY_1",
@@ -65,8 +67,8 @@ module.exports = {
     TERMINATE_ALL_SESSIONS_FAILURE: "ERR_AUTH_SERVICE_29",
     REFRESH_SESSION_FAILURE: "ERR_AUTH_SERVICE_30",
     REFRESH_TOKEN_NOT_MATCH: "ERR_AUTH_SERVICE_31",
-    REFRESH_TOKEN_MUST_NOT_EMPTY: "ERR_AUTH_SERVICE_32",
     UPDATE_PROFILE_INFORMATION_FAILURE: "ERR_AUTH_SERVICE_33",
+    CHANGE_PROFILE_PASSWORD_FAILURE: "ERR_AUTH_SERVICE_34",
 
     /** Token */
     SIGN_TOKEN_FAILURE: "ERR_AUTH_TOKEN_1",
@@ -84,6 +86,8 @@ module.exports = {
     USERNAME_OR_PASSWORD_MUST_NOT_EMPTY: "Username or password params must not be empty!",
     USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY: "Username or confirmCode params must not be empty!",
     USERNAME_PASSWORD_OR_CONFIRM_CODE_MUST_NOT_EMPTY: "Username, password or confirmCode params must not be empty!",
+    REFRESH_TOKEN_MUST_NOT_EMPTY: "Refresh token must not be empty!",
+    PASSWORD_OR_NEW_PASSWORD_MUST_NOT_EMPTY: "Password or hashedPassword must not be empty!",
 
     /** Repository */
     QUERY_FAILURE: "Query resource failure!",
@@ -158,11 +162,12 @@ module.exports = {
     TERMINATE_ALL_SESSIONS_FAILURE: "Terminal all session of current user failure!",
     RESET_PASSWORD_SUCCESS: "Reset password of profile success!",
     REFRESH_SESSION_FAILURE: "Refresh session failure!",
-    REFRESH_TOKEN_MUST_NOT_EMPTY: "Refresh token must not be empty!",
     REFRESH_TOKEN_NOT_MATCH: "Refresh token not match!",
     REFRESH_SESSION_SUCCESS: "Refresh session success!",
     UPDATE_PROFILE_INFORMATION_FAILURE: "Update profile information failure!",
     UPDATE_PROFILE_INFORMATION_SUCCESS: "Update profile information success!",
+    CHANGE_PROFILE_PASSWORD_FAILURE: "Change profile password failure!",
+    CHANGE_PROFILE_PASSWORD_SUCCESS: "Change profile password success!",
 
     /** Token */
     SIGN_TOKEN_FAILURE: "Sign a token failure!",
@@ -189,6 +194,7 @@ module.exports = {
     CANNOT_TERMINAL_CURRENT_SESSION: "cannot terminal current session",
     REFRESH_TOKEN_MUST_NOT_EMPTY: "refresh token must not be empty",
     REFRESH_TOKEN_NOT_MATCH: "refresh token not match",
+    PASSWORD_OR_NEW_PASSWORD_MUST_NOT_EMPTY: "password, or hashedPassword must not empty",
   },
 
   SCHEMA: {

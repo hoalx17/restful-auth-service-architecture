@@ -281,6 +281,19 @@ const updateProfileController = async (req, res, next) => {
   }
 };
 
+const changePasswordController = async (req, res, next) => {
+  try {
+    const { password, newPassword } = req.body;
+    const { hashedPassword, id, accessSignature } = req.user;
+    const payload = { id, hashedPassword, accessSignature };
+    const old = await auth.changePassword(password, newPassword, payload);
+    responseUpdate(res, old, MSG.CHANGE_PROFILE_PASSWORD_SUCCESS);
+  } catch (error) {
+    ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
+    next(createCriticalError(error, CODE.CHANGE_PROFILE_PASSWORD_FAILURE, MSG.CHANGE_PROFILE_PASSWORD_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR));
+  }
+};
+
 module.exports = {
   devController,
   roleController: {
@@ -305,5 +318,6 @@ module.exports = {
     resetPasswordController,
     refreshController,
     updateProfileController,
+    changePasswordController,
   },
 };

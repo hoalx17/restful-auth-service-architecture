@@ -570,6 +570,31 @@ const updateProfile = async (user, imageBuffer, payload) => {
   }
 };
 
+const changePassword = async (password, newPassword, payload) => {
+  try {
+    const { id, hashedPassword } = payload;
+    truthyValidator(
+      ERR.PASSWORD_OR_NEW_PASSWORD_MUST_NOT_EMPTY,
+      CODE.PASSWORD_OR_NEW_PASSWORD_MUST_NOT_EMPTY,
+      MSG.PASSWORD_OR_NEW_PASSWORD_MUST_NOT_EMPTY,
+      password,
+      newPassword
+    );
+    const isPasswordMatch = await bcrypt.compare(password, hashedPassword);
+    if (!isPasswordMatch) {
+      const error = newServerError(ERR.USERNAME_OR_PASSWORD_NOT_MATCH);
+      ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+      throwCriticalError(error, CODE.USERNAME_OR_PASSWORD_NOT_MATCH, MSG.USERNAME_OR_PASSWORD_NOT_MATCH, StatusCodes.BAD_REQUEST);
+    }
+    const old = await updateById(id, { password: newPassword }, User);
+    await terminateSessions(payload);
+    return old;
+  } catch (error) {
+    ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.CHANGE_PROFILE_PASSWORD_FAILURE, MSG.CHANGE_PROFILE_PASSWORD_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
 module.exports = {
   core: {
     findTargetById,
@@ -601,5 +626,6 @@ module.exports = {
     resetPassword,
     refresh,
     updateProfile,
+    changePassword,
   },
 };
