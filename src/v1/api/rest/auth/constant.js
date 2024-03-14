@@ -66,6 +66,7 @@ module.exports = {
     REFRESH_SESSION_FAILURE: "ERR_AUTH_SERVICE_30",
     REFRESH_TOKEN_NOT_MATCH: "ERR_AUTH_SERVICE_31",
     REFRESH_TOKEN_MUST_NOT_EMPTY: "ERR_AUTH_SERVICE_32",
+    UPDATE_PROFILE_INFORMATION_FAILURE: "ERR_AUTH_SERVICE_33",
 
     /** Token */
     SIGN_TOKEN_FAILURE: "ERR_AUTH_TOKEN_1",
@@ -160,6 +161,8 @@ module.exports = {
     REFRESH_TOKEN_MUST_NOT_EMPTY: "Refresh token must not be empty!",
     REFRESH_TOKEN_NOT_MATCH: "Refresh token not match!",
     REFRESH_SESSION_SUCCESS: "Refresh session success!",
+    UPDATE_PROFILE_INFORMATION_FAILURE: "Update profile information failure!",
+    UPDATE_PROFILE_INFORMATION_SUCCESS: "Update profile information success!",
 
     /** Token */
     SIGN_TOKEN_FAILURE: "Sign a token failure!",

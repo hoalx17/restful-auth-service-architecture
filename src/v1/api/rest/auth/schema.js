@@ -26,10 +26,10 @@ const joiUserCreate = Joi.object({
     "any.required": SCHEMA.USER_LAST_NAME_MUST_NOT_EMPTY,
   }),
   birthDay: Joi.date().optional().messages({
-    date: SCHEMA.USER_BIRTHDAY_MUST_BE_DATE_TIME,
+    "date.base": SCHEMA.USER_BIRTHDAY_MUST_BE_DATE_TIME,
   }),
   gender: Joi.boolean().optional().messages({
-    boolean: SCHEMA.USER_GENDER_MUST_BE_BOOLEAN,
+    "boolean.base": SCHEMA.USER_GENDER_MUST_BE_BOOLEAN,
   }),
   email: Joi.string().required().messages({
     "any.required": SCHEMA.USER_EMAIL_MUST_NOT_EMPTY,
@@ -42,7 +42,7 @@ const joiUserCreate = Joi.object({
     "any.required": SCHEMA.USER_FINGERPRINT_MUST_NOT_EMPTY,
   }),
   activated: Joi.boolean().optional().messages({
-    boolean: SCHEMA.USER_ACTIVATED_STATUS_MUST_BE_BOOLEAN,
+    "boolean.base": SCHEMA.USER_ACTIVATED_STATUS_MUST_BE_BOOLEAN,
   }),
   confirmCode: Joi.string().required().messages({
     "any.required": SCHEMA.USER_CONFIRM_CODE_MUST_NOT_EMPTY,
@@ -51,15 +51,13 @@ const joiUserCreate = Joi.object({
 });
 
 const joiUserUpdate = Joi.object({
-  password: Joi.string().optional(),
   birthDay: Joi.date().optional().messages({
-    date: SCHEMA.USER_BIRTHDAY_MUST_BE_DATE_TIME,
+    "date.base": SCHEMA.USER_BIRTHDAY_MUST_BE_DATE_TIME,
+  }),
+  gender: Joi.boolean().optional().messages({
+    "boolean.base": SCHEMA.USER_GENDER_MUST_BE_BOOLEAN,
   }),
   imageUrl: Joi.string().optional(),
-  activated: Joi.boolean().optional().messages({
-    boolean: SCHEMA.USER_ACTIVATED_STATUS_MUST_BE_BOOLEAN,
-  }),
-  isPendingDelete: Joi.boolean().optional(),
 });
 
 const joiUserVerifySignatureCreate = Joi.object({
@@ -68,14 +66,14 @@ const joiUserVerifySignatureCreate = Joi.object({
   }),
   accessSignatureExpiredAt: Joi.date().required().messages({
     "any.required": SCHEMA.USER_VERIFY_SIGNATURE_ACCESS_MUST_NOT_EMPTY,
-    date: SCHEMA.USER_VERIFY_SIGNATURE_ACCESS_EXPIRED_AT_MUST_BE_DATE_TIME,
+    "date.base": SCHEMA.USER_VERIFY_SIGNATURE_ACCESS_EXPIRED_AT_MUST_BE_DATE_TIME,
   }),
   refreshSignature: Joi.string().required().messages({
     "any.required": SCHEMA.USER_VERIFY_SIGNATURE_REFRESH_MUST_NOT_EMPTY,
   }),
   refreshSignatureExpiredAt: Joi.date().required().messages({
     "any.required": SCHEMA.USER_VERIFY_SIGNATURE_REFRESH_MUST_NOT_EMPTY,
-    date: SCHEMA.USER_VERIFY_SIGNATURE_REFRESH_EXPIRED_AT_MUST_BE_DATE_TIME,
+    "date.base": SCHEMA.USER_VERIFY_SIGNATURE_REFRESH_EXPIRED_AT_MUST_BE_DATE_TIME,
   }),
 });
 

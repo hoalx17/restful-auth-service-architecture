@@ -266,6 +266,21 @@ const refreshController = async (req, res, next) => {
   }
 };
 
+const updateProfileController = async (req, res, next) => {
+  try {
+    const { id } = req.user;
+    const { birthDay, gender } = req.body;
+    const payload = { id };
+    const user = { birthDay, gender };
+    const imageBuffer = req.file?.buffer;
+    const old = await auth.updateProfile(user, imageBuffer, payload);
+    responseUpdate(res, old, MSG.UPDATE_PROFILE_INFORMATION_SUCCESS);
+  } catch (error) {
+    ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
+    next(createCriticalError(error, CODE.UPDATE_PROFILE_INFORMATION_FAILURE, MSG.UPDATE_PROFILE_INFORMATION_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR));
+  }
+};
+
 module.exports = {
   devController,
   roleController: {
@@ -289,5 +304,6 @@ module.exports = {
     terminateSessionController,
     resetPasswordController,
     refreshController,
+    updateProfileController,
   },
 };

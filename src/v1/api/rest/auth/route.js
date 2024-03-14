@@ -43,11 +43,12 @@ router.post("/sign-up", upload.single("imageUrl"), authController.signUpControll
 router.patch("/activate", authController.activateController);
 router.post("/sign-in", authController.signInController);
 router.get("/me", middleware.requireSignIn, authController.meController);
-router.get("/sessions", middleware.requireSignIn, authController.getSessionsController);
+router.patch("/me", upload.single("imageUrl"), middleware.requireSignIn, authController.updateProfileController);
 router.patch("/deactivate", middleware.requireSignIn, authController.deactivateController);
 router.delete("/sign-out", middleware.requireSignIn, authController.signOutController);
 router.delete("/delete", middleware.requireSignIn, authController.removeController);
 router.patch("/cancel-delete", middleware.requireSignIn, middleware.requirePendingDelete, authController.cancelRemoveController);
+router.get("/sessions", middleware.requireSignIn, authController.getSessionsController);
 router.delete("/sessions", middleware.requireSignIn, authController.terminateSessionsController);
 router.delete("/sessions/:id", middleware.requireSignIn, authController.terminateSessionController);
 router.patch("/reset-password", authController.resetPasswordController);

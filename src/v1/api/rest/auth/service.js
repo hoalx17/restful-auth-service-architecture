@@ -26,7 +26,7 @@ const { createValidator, updateValidator, truthyValidator } = require("./validat
 const { CloudinaryUtils } = require("../../../util");
 const { User, Role, UserVerifySignature } = require("./model");
 const {
-  userSchema: { joiUserCreate },
+  userSchema: { joiUserCreate, joiUserUpdate },
 } = require("./schema");
 const { signToken } = require("./token");
 
@@ -149,7 +149,7 @@ const removeTargetManyByCondition = async (where, model, options) => {
 const ensureLegalSession = async (payload) => {
   try {
     const { id, accessSignature } = payload;
-    const { rows: accessSignatures } = await findManyTargetByCondition(
+    const { rows: accessSignatures } = await findManyByCondition(
       {
         user_id: id,
         access_signature_expired_at: {
@@ -176,7 +176,7 @@ const ensureLegalSession = async (payload) => {
 const ensureCanMakeNewSession = async (payload) => {
   try {
     const { id } = payload;
-    const { count, rows: accessSignatures } = await findManyTargetByCondition(
+    const { count, rows: accessSignatures } = await findManyByCondition(
       {
         user_id: id,
         access_signature_expired_at: {
@@ -206,9 +206,9 @@ const ensureNotCurrentSession = async (sessionId, payload) => {
 
 /** Auth Service */
 // TODO: Custom Sequelize error message
-const signUp = async (user, roleId, imageBuffer) => {
+const signUp = async (user, roleId, imageBuffer, payload) => {
   try {
-    // TODO: Should validate request before uploading
+    await createValidator(user, joiUserCreate);
     /** Upload image to Cloudinary, if imageBuffer not provided, use default image url */
     if (imageBuffer) {
       const uploadImage = await CloudinaryUtils.uploadSingleImage(imageBuffer);
@@ -217,8 +217,8 @@ const signUp = async (user, roleId, imageBuffer) => {
       user.imageUrl = CLOUDINARY_DEFAULT_IMAGE_URL;
     }
     /** Save user with role, if role id not exists, save as default role (user) */
-    const role = await findTargetById(roleId, Role);
-    const saved = await saveOneTarget(user, joiUserCreate, User);
+    const role = await findById(roleId, Role);
+    const saved = await saveOne(user, User);
     await role.addUsers(saved);
     // TODO: Send activation request email
     return saved;
@@ -228,7 +228,7 @@ const signUp = async (user, roleId, imageBuffer) => {
   }
 };
 
-const activate = async (username, confirmCode) => {
+const activate = async (username, confirmCode, payload) => {
   try {
     truthyValidator(
       ERR.USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY,
@@ -256,7 +256,7 @@ const activate = async (username, confirmCode) => {
   }
 };
 
-const signIn = async (username, password) => {
+const signIn = async (username, password, payload) => {
   try {
     truthyValidator(
       ERR.USERNAME_OR_PASSWORD_MUST_NOT_EMPTY,
@@ -549,6 +549,27 @@ const refresh = async (payload) => {
   }
 };
 
+const updateProfile = async (user, imageBuffer, payload) => {
+  try {
+    const { id } = payload;
+    await updateValidator(user, joiUserUpdate);
+    if (imageBuffer) {
+      const uploadImage = await CloudinaryUtils.uploadSingleImage(imageBuffer);
+      user.imageUrl = uploadImage.secure_url;
+    }
+    if (_.every(user, _.isUndefined)) {
+      const error = newServerError(ERR.NOT_MODIFIED);
+      ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+      throwCriticalError(error, CODE.NOT_MODIFY, MSG.NOT_MODIFY, StatusCodes.NOT_MODIFIED);
+    }
+    const old = await updateById(id, user, User);
+    return old;
+  } catch (error) {
+    ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.UPDATE_PROFILE_INFORMATION_FAILURE, MSG.UPDATE_PROFILE_INFORMATION_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
 module.exports = {
   core: {
     findTargetById,
@@ -579,5 +600,6 @@ module.exports = {
     terminateSession,
     resetPassword,
     refresh,
+    updateProfile,
   },
 };
