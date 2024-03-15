@@ -34,9 +34,7 @@ const joiUserCreate = Joi.object({
   email: Joi.string().required().messages({
     "any.required": SCHEMA.USER_EMAIL_MUST_NOT_EMPTY,
   }),
-  tel: Joi.string().required().messages({
-    "any.required": SCHEMA.USER_TEL_MUST_NOT_EMPTY,
-  }),
+  tel: Joi.string().optional(),
   imageUrl: Joi.string().optional(),
   fingerprint: Joi.string().required().messages({
     "any.required": SCHEMA.USER_FINGERPRINT_MUST_NOT_EMPTY,
@@ -48,6 +46,7 @@ const joiUserCreate = Joi.object({
     "any.required": SCHEMA.USER_CONFIRM_CODE_MUST_NOT_EMPTY,
   }),
   isPendingDelete: Joi.boolean().optional(),
+  provider: Joi.string().optional(),
 });
 
 const joiUserUpdate = Joi.object({

@@ -1,7 +1,11 @@
 module.exports = {
-  REQUIRED_HEADERS_NAME: ["Authorization"],
   USER_RESOURCE_NAME: "USER",
   ROLE_RESOURCE_NAME: "ROLE",
+  COMMON: {
+    REQUIRED_HEADERS_NAME: ["Authorization"],
+    DEFAULT_ROLE_ID: 1,
+    GOOGLE_PROVIDER_NAME: "Google",
+  },
 
   CODE: {
     /** Transform */
@@ -19,13 +23,14 @@ module.exports = {
     /** Repository */
     QUERY_FAILURE: "ERR_AUTH_REPOSITORY_1",
     QUERY_MANY_FAILURE: "ERR_AUTH_REPOSITORY_2",
-    CREATE_FAILURE: "ERR_AUTH_REPOSITORY_3",
-    CREATE_MANY_FAILURE: "ERR_AUTH_REPOSITORY_4",
-    UPDATE_FAILURE: "ERR_AUTH_REPOSITORY_5",
-    NOT_MODIFY: "ERR_AUTH_REPOSITORY_6",
-    UPDATE_MANY_FAILURE: "ERR_AUTH_REPOSITORY_7",
-    DELETE_FAILURE: "ERR_AUTH_REPOSITORY_8",
-    DELETE_MANY_FAILURE: "ERR_AUTH_REPOSITORY_9",
+    QUERY_OR_CREATE_FAILURE: "ERR_AUTH_REPOSITORY_3",
+    CREATE_FAILURE: "ERR_AUTH_REPOSITORY_4",
+    CREATE_MANY_FAILURE: "ERR_AUTH_REPOSITORY_5",
+    UPDATE_FAILURE: "ERR_AUTH_REPOSITORY_6",
+    NOT_MODIFY: "ERR_AUTH_REPOSITORY_7",
+    UPDATE_MANY_FAILURE: "ERR_AUTH_REPOSITORY_8",
+    DELETE_FAILURE: "ERR_AUTH_REPOSITORY_9",
+    DELETE_MANY_FAILURE: "ERR_AUTH_REPOSITORY_10",
 
     /** Middleware */
     REQUIRED_SIGN_IN_TO_CONTINUE: "ERR_AUTH_MIDDLEWARE_1",
@@ -69,6 +74,8 @@ module.exports = {
     REFRESH_TOKEN_NOT_MATCH: "ERR_AUTH_SERVICE_31",
     UPDATE_PROFILE_INFORMATION_FAILURE: "ERR_AUTH_SERVICE_33",
     CHANGE_PROFILE_PASSWORD_FAILURE: "ERR_AUTH_SERVICE_34",
+    OAUTH_SIGN_IN_FAILURE: "ERR_AUTH_SERVICE_35",
+    GOOGLE_SIGN_IN_FAILURE: "ERR_AUTH_SERVICE_36",
 
     /** Token */
     SIGN_TOKEN_FAILURE: "ERR_AUTH_TOKEN_1",
@@ -76,6 +83,7 @@ module.exports = {
     AUTHORIZATION_HEADER_MUST_NOT_EMPTY: "ERR_AUTH_TOKEN_3",
     VERIFY_TOKEN_FAILURE: "ERR_AUTH_TOKEN_4",
   },
+
   MSG: {
     /** Transform */
     REQUEST_TRANSFORM_FAILURE: "Transform on Schema return failure result!",
@@ -92,6 +100,7 @@ module.exports = {
     /** Repository */
     QUERY_FAILURE: "Query resource failure!",
     QUERY_MANY_FAILURE: "Query resource many failure!",
+    QUERY_OR_CREATE_FAILURE: "Query or create resource failure!",
     CREATE_FAILURE: "Create resource failure!",
     CREATE_MANY_FAILURE: "Create resource many failure!",
     UPDATE_FAILURE: "Update resource failure!",
@@ -168,6 +177,10 @@ module.exports = {
     UPDATE_PROFILE_INFORMATION_SUCCESS: "Update profile information success!",
     CHANGE_PROFILE_PASSWORD_FAILURE: "Change profile password failure!",
     CHANGE_PROFILE_PASSWORD_SUCCESS: "Change profile password success!",
+    OAUTH_SIGN_IN_FAILURE: "Sign in with OAuth failure!",
+    OAUTH_SIGN_IN_SUCCESS: "Sign in with OAuth success!",
+    GOOGLE_SIGN_IN_FAILURE: "Sign in with Google OAuth failure!",
+    GOOGLE_SIGN_IN_SUCCESS: "Sign in with Google OAuth success!",
 
     /** Token */
     SIGN_TOKEN_FAILURE: "Sign a token failure!",
@@ -205,7 +218,6 @@ module.exports = {
     USER_BIRTHDAY_MUST_BE_DATE_TIME: "User: birth day must be date time!",
     USER_GENDER_MUST_BE_BOOLEAN: "User: gender must be boolean!",
     USER_EMAIL_MUST_NOT_EMPTY: "User: email must not empty!",
-    USER_TEL_MUST_NOT_EMPTY: "User: tel must not empty!",
     USER_FINGERPRINT_MUST_NOT_EMPTY: "User: fingerprint must not empty!",
     USER_ACTIVATED_STATUS_MUST_BE_BOOLEAN: "User: activated status must be boolean!",
     USER_CONFIRM_CODE_MUST_NOT_EMPTY: "User: confirmCode must not empty!",

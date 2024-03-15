@@ -59,6 +59,16 @@ const findManyByCondition = async (cond, paginate, model, options) => {
   }
 };
 
+const findOneOrCreateByCondition = async (where, defaults, model, options) => {
+  try {
+    const [target, created] = await model.findOrCreate({ ...options, where, defaults });
+    return [target, created];
+  } catch (error) {
+    ON_RELEASE || console.log(`Repository: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.QUERY_OR_CREATE_FAILURE, MSG.QUERY_OR_CREATE_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
 const saveOne = async (target, model, options) => {
   try {
     const saved = await model.create(target, options);
@@ -200,6 +210,7 @@ module.exports = {
   findById,
   findOneByCondition,
   findManyByCondition,
+  findOneOrCreateByCondition,
   saveOne,
   saveMany,
   updateById,

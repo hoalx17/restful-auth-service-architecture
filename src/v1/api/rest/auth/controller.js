@@ -1,10 +1,11 @@
 const chalk = require("chalk");
 const { StatusCodes } = require("http-status-codes");
 const Hashids = require("hashids");
+const { v4: uuidv4 } = require("uuid");
 
-const { core, auth } = require("./service");
+const { core, auth, oauth } = require("./service");
 const { ON_RELEASE } = require("../../../../../constant");
-const { CODE, MSG, ROLE_RESOURCE_NAME, USER_RESOURCE_NAME } = require("./constant");
+const { CODE, MSG, ROLE_RESOURCE_NAME, USER_RESOURCE_NAME, COMMON } = require("./constant");
 const { requestTransform, roleTransform, userTransform, responseTransform } = require("./transform");
 const { Role } = require("./model");
 const {
@@ -141,11 +142,11 @@ const signInController = async (req, res, next) => {
   }
 };
 
-const meController = async (req, res, next) => {
+const getProfileController = async (req, res, next) => {
   try {
     const { username } = req.user;
     const payload = { username };
-    const requestUser = await auth.me(payload);
+    const requestUser = await auth.getProfile(payload);
     const user = responseTransform(requestUser.toJSON(), USER_RESOURCE_NAME);
     responseFindOrigin(res, user, MSG.GET_PROFILE_INFO_SUCCESS);
   } catch (error) {
@@ -294,6 +295,28 @@ const changePasswordController = async (req, res, next) => {
   }
 };
 
+const signInGoogleController = async (req, res, next) => {
+  try {
+    const user = {
+      ...req.user,
+      activated: true,
+      fingerprint: req.fingerprint?.hash,
+      confirmCode: uuidv4(),
+      password: uuidv4(),
+      provider: COMMON.GOOGLE_PROVIDER_NAME,
+    };
+    const { isNew, accessToken, refreshToken } = await oauth.signInGoogle(user);
+    responseFindOrigin(res, { isNew, accessToken, refreshToken }, MSG.GOOGLE_SIGN_IN_SUCCESS);
+  } catch (error) {
+    ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
+    next(createCriticalError(error, CODE.GOOGLE_SIGN_IN_FAILURE, MSG.GOOGLE_SIGN_IN_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR));
+  }
+};
+
+const signInOAuthErrorController = async (req, res, next) => {
+  next(createCriticalError(error, CODE.OAUTH_SIGN_IN_FAILURE, MSG.OAUTH_SIGN_IN_FAILURE, StatusCodes.BAD_REQUEST));
+};
+
 module.exports = {
   devController,
   roleController: {
@@ -307,7 +330,7 @@ module.exports = {
     signUpController,
     activateController,
     signInController,
-    meController,
+    getProfileController,
     getSessionsController,
     deactivateController,
     signOutController,
@@ -319,5 +342,9 @@ module.exports = {
     refreshController,
     updateProfileController,
     changePasswordController,
+  },
+  oauthController: {
+    signInOAuthErrorController,
+    signInGoogleController,
   },
 };

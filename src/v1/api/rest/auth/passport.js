@@ -1,6 +1,6 @@
 const _ = require("lodash");
 const { ExtractJwt, Strategy: JWTStrategy } = require("passport-jwt");
-const bcrypt = require("bcrypt");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const { StatusCodes } = require("http-status-codes");
 const chalk = require("chalk");
 const moment = require("moment");
@@ -12,9 +12,10 @@ const { CODE, MSG, ERR } = require("./constant");
 const { ON_RELEASE } = require("../../../../../constant");
 const { getTokenFromHeader } = require("./token");
 
-const { JWT_ACCESS_TOKEN_SECRET } = process.env;
+const { JWT_ACCESS_TOKEN_SECRET, GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, GOOGLE_OAUTH_REDIRECT_URL } = process.env;
 
 const passportConfig = async (passport) => {
+  /** JWT Strategy */
   passport.use(
     new JWTStrategy(
       {
@@ -61,6 +62,33 @@ const passportConfig = async (passport) => {
               done(null, user);
             }
           }
+        } catch (error) {
+          ON_RELEASE || console.log(`Passport: ${chalk.red(error.message)}`);
+          done(error);
+        }
+      }
+    )
+  );
+
+  /** Google OAuth2.0 Strategy */
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: GOOGLE_OAUTH_CLIENT_ID,
+        clientSecret: GOOGLE_OAUTH_CLIENT_SECRET,
+        callbackURL: GOOGLE_OAUTH_REDIRECT_URL,
+      },
+      (accessToken, refreshToken, profile, done) => {
+        try {
+          const { name, emails, photos, provider } = profile;
+          const user = {
+            username: emails[0].value,
+            firstName: name.familyName,
+            lastName: name.givenName,
+            email: emails[0].value,
+            imageUrl: photos[0].value,
+          };
+          done(null, user);
         } catch (error) {
           ON_RELEASE || console.log(`Passport: ${chalk.red(error.message)}`);
           done(error);

@@ -18,9 +18,10 @@ const {
   removeById,
   removeManyByCondition,
   removeOneByCondition,
+  findOneOrCreateByCondition,
 } = require("./repository");
 const { ON_RELEASE } = require("../../../../../constant");
-const { CODE, MSG, ERR } = require("./constant");
+const { CODE, MSG, ERR, COMMON } = require("./constant");
 const { throwCriticalError, newServerError } = require("../../../error");
 const { createValidator, updateValidator, truthyValidator } = require("./validator");
 const { CloudinaryUtils } = require("../../../util");
@@ -304,7 +305,7 @@ const signIn = async (username, password, payload) => {
   }
 };
 
-const me = async (payload) => {
+const getProfile = async (payload) => {
   try {
     const { username } = payload;
     const requestUser = await findOneByCondition({ username, activated: true }, User, {
@@ -590,6 +591,41 @@ const changePassword = async (password, newPassword, payload) => {
   }
 };
 
+/** OAuth Service */
+const signInGoogle = async (user, payload) => {
+  try {
+    await createValidator(user, joiUserCreate);
+    const defaultRole = await findById(COMMON.DEFAULT_ROLE_ID, Role);
+    const [requestUser, isNew] = await findOneOrCreateByCondition({ username: user.username }, user, User);
+    requestUser.setRoles(defaultRole);
+    if (!isNew) {
+      const isCanMakeNewSession = await ensureCanMakeNewSession({ id: requestUser.id });
+      if (!isCanMakeNewSession) {
+        const error = newServerError(ERR.MAX_SESSION_REACH);
+        ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+        throwCriticalError(error, CODE.MAX_SESSION_REACH, MSG.MAX_SESSION_REACH, StatusCodes.BAD_REQUEST);
+      }
+    }
+    const payload = { username: requestUser.username };
+    const [accessToken, accessSignature] = signToken(payload, JWT_ACCESS_TOKEN_LIFETIME, JWT_ACCESS_TOKEN_SECRET);
+    const [refreshToken, refreshSignature] = signToken(payload, JWT_REFRESH_TOKEN_LIFETIME, JWT_REFRESH_TOKEN_SECRET);
+    const userVerifySignature = await saveOne(
+      {
+        accessSignature,
+        accessSignatureExpiredAt: new Date(Date.now() + ms(JWT_ACCESS_TOKEN_LIFETIME)),
+        refreshSignature,
+        refreshSignatureExpiredAt: new Date(Date.now() + ms(JWT_REFRESH_TOKEN_LIFETIME)),
+      },
+      UserVerifySignature
+    );
+    await userVerifySignature.setUser(requestUser);
+    return { isNew, accessToken, refreshToken };
+  } catch (error) {
+    ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.GOOGLE_SIGN_IN_FAILURE, MSG.GOOGLE_SIGN_IN_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
 module.exports = {
   core: {
     findTargetById,
@@ -610,7 +646,7 @@ module.exports = {
     signUp,
     activate,
     signIn,
-    me,
+    getProfile,
     getSessions,
     deactivate,
     signOut,
@@ -622,5 +658,8 @@ module.exports = {
     refresh,
     updateProfile,
     changePassword,
+  },
+  oauth: {
+    signInGoogle,
   },
 };

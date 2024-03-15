@@ -4,7 +4,7 @@ const path = require("path");
 const { StatusCodes } = require("http-status-codes");
 const passport = require("passport");
 
-const { roleController, devController, authController } = require("./controller");
+const { roleController, devController, authController, oauthController } = require("./controller");
 const {
   Constant: { ALLOW_IMAGE_FORMAT, CODE, MSG, ERR },
 } = require("../../../util");
@@ -61,7 +61,7 @@ router.patch("/refresh", middleware.requireSignIn, authController.refreshControl
 router.post("/sign-up", upload.single("imageUrl"), authController.signUpController);
 router.patch("/activate", authController.activateController);
 router.post("/sign-in", authController.signInController);
-router.get("/me", passport.authenticate("jwt", { session: false }), authController.meController);
+router.get("/me", passport.authenticate("jwt", { session: false }), authController.getProfileController);
 router.patch("/me", upload.single("imageUrl"), passport.authenticate("jwt", { session: false }), authController.updateProfileController);
 router.patch("/deactivate", passport.authenticate("jwt", { session: false }), authController.deactivateController);
 router.delete("/sign-out", passport.authenticate("jwt", { session: false }), authController.signOutController);
@@ -73,5 +73,15 @@ router.delete("/sessions/:id", passport.authenticate("jwt", { session: false }),
 router.patch("/reset-password", authController.resetPasswordController);
 router.patch("/change-password", passport.authenticate("jwt", { session: false }), authController.changePasswordController);
 router.patch("/refresh", passport.authenticate("jwt", { session: false }), authController.refreshController);
+
+/** OAuth */
+router.get("/oauth/google/failure", oauthController.signInOAuthErrorController);
+/** Google Sign In */
+router.get("/oauth/google", passport.authenticate("google", { scope: ["email", "profile"], session: false }));
+router.get(
+  "/oauth/google/callback",
+  passport.authenticate("google", { failureRedirect: "/api/v1/auth/oauth/google/failure", session: false }),
+  oauthController.signInGoogleController
+);
 
 module.exports = router;

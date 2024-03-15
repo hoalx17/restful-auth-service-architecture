@@ -70,10 +70,9 @@ const User = sequelize.define(
       type: DataTypes.STRING,
       field: "tel",
       unique: true,
-      allowNull: false,
     },
     imageUrl: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       field: "image_url",
     },
     fingerprint: {
@@ -96,6 +95,10 @@ const User = sequelize.define(
       field: "is_pending_delete",
       allowNull: false,
       defaultValue: false,
+    },
+    provider: {
+      type: DataTypes.STRING,
+      field: "provider",
     },
   },
   {

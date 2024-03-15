@@ -2,14 +2,14 @@ const jwt = require("jsonwebtoken");
 const chalk = require("chalk");
 const { StatusCodes } = require("http-status-codes");
 
-const { REQUIRED_HEADERS_NAME, CODE, MSG, ERR } = require("./constant");
+const { COMMON, CODE, MSG, ERR } = require("./constant");
 const { ON_RELEASE } = require("../../../../../constant");
 const { throwCriticalError, newServerError } = require("../../../error");
 
 const getTokenFromHeader = (req, headerName) => {
   try {
     const token = req.get(headerName)?.split(" ")[1] || req.get(headerName);
-    if (!token && REQUIRED_HEADERS_NAME.includes(headerName)) {
+    if (!token && COMMON.REQUIRED_HEADERS_NAME.includes(headerName)) {
       const error = newServerError(ERR.AUTHORIZATION_HEADER_MUST_NOT_EMPTY);
       ON_RELEASE || console.log(`Token: ${chalk.red(error.message)}`);
       throwCriticalError(error, CODE.AUTHORIZATION_HEADER_MUST_NOT_EMPTY, MSG.AUTHORIZATION_HEADER_MUST_NOT_EMPTY, StatusCodes.UNAUTHORIZED);
