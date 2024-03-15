@@ -58,6 +58,7 @@ const passportConfig = async (passport) => {
                 sessionId: sessionId,
                 accessSignature,
                 isCanMakeNewSession,
+                provider: requestUser.provider,
               };
               done(null, user);
             }

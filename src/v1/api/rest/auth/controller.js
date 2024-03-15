@@ -285,8 +285,8 @@ const updateProfileController = async (req, res, next) => {
 const changePasswordController = async (req, res, next) => {
   try {
     const { password, newPassword } = req.body;
-    const { hashedPassword, id, accessSignature } = req.user;
-    const payload = { id, hashedPassword, accessSignature };
+    const { hashedPassword, id, accessSignature, provider } = req.user;
+    const payload = { id, hashedPassword, accessSignature, provider };
     const old = await auth.changePassword(password, newPassword, payload);
     responseUpdate(res, old, MSG.CHANGE_PROFILE_PASSWORD_SUCCESS);
   } catch (error) {

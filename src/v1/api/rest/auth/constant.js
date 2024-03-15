@@ -19,6 +19,7 @@ module.exports = {
     USERNAME_PASSWORD_OR_CONFIRM_CODE_MUST_NOT_EMPTY: "ERR_AUTH_VALIDATION_4",
     REFRESH_TOKEN_MUST_NOT_EMPTY: "ERR_AUTH_VALIDATION_5",
     PASSWORD_OR_NEW_PASSWORD_MUST_NOT_EMPTY: "ERR_AUTH_VALIDATION_6",
+    NEW_PASSWORD_MUST_NOT_EMPTY: "ERR_AUTH_VALIDATION_7",
 
     /** Repository */
     QUERY_FAILURE: "ERR_AUTH_REPOSITORY_1",
@@ -95,7 +96,8 @@ module.exports = {
     USERNAME_OR_CONFIRM_CODE_MUST_NOT_EMPTY: "Username or confirmCode params must not be empty!",
     USERNAME_PASSWORD_OR_CONFIRM_CODE_MUST_NOT_EMPTY: "Username, password or confirmCode params must not be empty!",
     REFRESH_TOKEN_MUST_NOT_EMPTY: "Refresh token must not be empty!",
-    PASSWORD_OR_NEW_PASSWORD_MUST_NOT_EMPTY: "Password or hashedPassword must not be empty!",
+    PASSWORD_OR_NEW_PASSWORD_MUST_NOT_EMPTY: "Password or new password must not be empty!",
+    NEW_PASSWORD_MUST_NOT_EMPTY: "New password must not be empty!",
 
     /** Repository */
     QUERY_FAILURE: "Query resource failure!",
@@ -207,7 +209,8 @@ module.exports = {
     CANNOT_TERMINAL_CURRENT_SESSION: "cannot terminal current session",
     REFRESH_TOKEN_MUST_NOT_EMPTY: "refresh token must not be empty",
     REFRESH_TOKEN_NOT_MATCH: "refresh token not match",
-    PASSWORD_OR_NEW_PASSWORD_MUST_NOT_EMPTY: "password, or hashedPassword must not empty",
+    PASSWORD_OR_NEW_PASSWORD_MUST_NOT_EMPTY: "password, or new password must not empty",
+    NEW_PASSWORD_MUST_NOT_EMPTY: "new password must not be empty",
   },
 
   SCHEMA: {
