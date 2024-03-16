@@ -160,6 +160,13 @@ const ensureLegalSession = async (payload) => {
       { page: 1, size: parseInt(MAX_ALLOW_SESSION) },
       UserVerifySignature
     );
+    const isNotDangerousSession = await ensureNotDangerousSession({ id, accessSignature });
+    if (!isNotDangerousSession) {
+      await updateById(id, { isRecommendPasswordChange: true }, User);
+      const error = newServerError(ERR.DANGEROUS_SESSION_DETECT);
+      ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+      throwCriticalError(error, CODE.DANGEROUS_SESSION_DETECT, MSG.DANGEROUS_SESSION_DETECT, StatusCodes.FORBIDDEN);
+    }
     const session = accessSignatures.find((v, i, o) => v.toJSON().accessSignature === accessSignature);
     if (!session) {
       const error = newServerError(ERR.ILLEGAL_SESSION);
@@ -202,6 +209,33 @@ const ensureNotCurrentSession = async (sessionId, payload) => {
   } catch (error) {
     ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
     throwCriticalError(error, CODE.ENSURE_NOT_CURRENT_SESSION_FAILURE, MSG.ENSURE_NOT_CURRENT_SESSION_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
+const ensureNotDangerousSession = async (payload) => {
+  try {
+    const { id, accessSignature } = payload;
+    const { rows: dangerousSession } = await findManyByCondition(
+      {
+        user_id: id,
+        access_signature_expired_at: {
+          [Op.gt]: new Date(),
+        },
+        deleted_at: {
+          [Op.not]: null,
+        },
+      },
+      { page: 1, size: 24 * 7 },
+      UserVerifySignature,
+      {
+        paranoid: false,
+      }
+    );
+    const isDangerousSession = dangerousSession.some((v, i, o) => v.toJSON().accessSignature === accessSignature);
+    return !isDangerousSession;
+  } catch (error) {
+    ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
+    throwCriticalError(error, CODE.ENSURE_NOT_DANGEROUS_SESSION_FAILURE, MSG.ENSURE_NOT_DANGEROUS_SESSION_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -296,7 +330,7 @@ const signIn = async (username, password, payload) => {
           UserVerifySignature
         );
         await userVerifySignature.setUser(requestUser);
-        return { accessToken, refreshToken };
+        return { isRecommendPasswordChange: requestUser.isRecommendPasswordChange, accessToken, refreshToken };
       }
     }
   } catch (error) {
@@ -434,17 +468,30 @@ const cancelRemove = async (password, payload) => {
 const terminateSessions = async (payload) => {
   try {
     const { accessSignature, id } = payload;
-    const terminateSession = await removeManyByCondition(
+    const { count, rows: oldSessions } = await findManyByCondition(
       {
         user_id: id,
         access_signature: {
           [Op.ne]: accessSignature,
         },
       },
+      { page: 1, size: parseInt(MAX_ALLOW_SESSION) },
       UserVerifySignature
     );
-    const sessions = terminateSession.map((v, i, o) => ({ id: hashids.encode(v.id) }));
-    return { count: sessions.length, sessions };
+    if (!_.isEmpty(oldSessions)) {
+      const terminateSession = await removeManyByCondition(
+        {
+          user_id: id,
+          access_signature: {
+            [Op.ne]: accessSignature,
+          },
+        },
+        UserVerifySignature
+      );
+      const sessions = terminateSession.map((v, i, o) => ({ id: hashids.encode(v.id) }));
+      return { count: sessions.length, sessions };
+    }
+    return { count: 0, sessions: [] };
   } catch (error) {
     ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
     throwCriticalError(error, CODE.TERMINATE_SESSIONS_FAILURES, MSG.TERMINATE_SESSIONS_FAILURES, StatusCodes.INTERNAL_SERVER_ERROR);
@@ -508,7 +555,7 @@ const resetPassword = async (username, confirmCode, password, payload) => {
       ON_RELEASE || console.log(`Service: ${chalk.red(error.message)}`);
       throwCriticalError(error, CODE.CONFIRM_CODE_NOT_MATCH, MSG.CONFIRM_CODE_NOT_MATCH, StatusCodes.BAD_REQUEST);
     } else {
-      const old = await updateById(requestUser.id, { password }, User);
+      const old = await updateById(requestUser.id, { password, isRecommendPasswordChange: false }, User);
       await terminateAllSessions({ id: requestUser.id });
       return old;
     }
@@ -531,12 +578,18 @@ const refresh = async (payload) => {
       const payload = { username };
       const [newAccessToken, newAccessSignature] = signToken(payload, JWT_ACCESS_TOKEN_LIFETIME, JWT_ACCESS_TOKEN_SECRET);
       const [newRefreshToken, newRefreshSignature] = signToken(payload, JWT_REFRESH_TOKEN_LIFETIME, JWT_REFRESH_TOKEN_SECRET);
-      signature.update({
-        accessSignature: newAccessSignature,
-        accessSignatureExpiredAt: new Date(Date.now() + ms(JWT_ACCESS_TOKEN_LIFETIME)),
-        refreshSignature: newRefreshSignature,
-        refreshSignatureExpiredAt: new Date(Date.now() + ms(JWT_REFRESH_TOKEN_LIFETIME)),
-      });
+      await signature.destroy();
+      const requestUser = await findById(id, User);
+      const newTokenSignature = await saveOne(
+        {
+          accessSignature: newAccessSignature,
+          accessSignatureExpiredAt: new Date(Date.now() + ms(JWT_ACCESS_TOKEN_LIFETIME)),
+          refreshSignature: newRefreshSignature,
+          refreshSignatureExpiredAt: new Date(Date.now() + ms(JWT_REFRESH_TOKEN_LIFETIME)),
+        },
+        UserVerifySignature
+      );
+      await newTokenSignature.setUser(requestUser);
       return { newAccessToken, newRefreshToken };
     }
   } catch (error) {
@@ -586,7 +639,7 @@ const changePassword = async (password, newPassword, payload) => {
         throwCriticalError(error, CODE.USERNAME_OR_PASSWORD_NOT_MATCH, MSG.USERNAME_OR_PASSWORD_NOT_MATCH, StatusCodes.BAD_REQUEST);
       }
     }
-    const old = await updateById(id, { password: newPassword }, User);
+    const old = await updateById(id, { password: newPassword, isRecommendPasswordChange: false }, User);
     await terminateSessions(payload);
     return old;
   } catch (error) {
@@ -644,7 +697,9 @@ module.exports = {
   },
   util: {
     ensureLegalSession,
+    ensureCanMakeNewSession,
     ensureNotCurrentSession,
+    ensureNotDangerousSession,
   },
   auth: {
     signUp,

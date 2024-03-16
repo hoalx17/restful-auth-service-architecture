@@ -47,6 +47,7 @@ const joiUserCreate = Joi.object({
   }),
   isPendingDelete: Joi.boolean().optional(),
   provider: Joi.string().optional(),
+  isRecommendPasswordChange: Joi.string().optional(),
 });
 
 const joiUserUpdate = Joi.object({

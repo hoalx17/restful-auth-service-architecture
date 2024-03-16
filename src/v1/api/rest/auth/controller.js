@@ -134,8 +134,8 @@ const activateController = async (req, res, next) => {
 const signInController = async (req, res, next) => {
   try {
     const { username, password } = req.body;
-    const { accessToken, refreshToken } = await auth.signIn(username, password);
-    responseFindOrigin(res, { accessToken, refreshToken }, MSG.SIGN_IN_SUCCESS);
+    const { isRecommendPasswordChange, accessToken, refreshToken } = await auth.signIn(username, password);
+    responseFindOrigin(res, { isRecommendPasswordChange, accessToken, refreshToken }, MSG.SIGN_IN_SUCCESS);
   } catch (error) {
     ON_RELEASE || console.log(`Controller: ${chalk.red(error.message)}`);
     next(createCriticalError(error, CODE.SIGN_IN_FAILURE, MSG.SIGN_IN_FAILURE, StatusCodes.INTERNAL_SERVER_ERROR));

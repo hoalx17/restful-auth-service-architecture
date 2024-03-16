@@ -100,6 +100,11 @@ const User = sequelize.define(
       type: DataTypes.STRING,
       field: "provider",
     },
+    isRecommendPasswordChange: {
+      type: DataTypes.BOOLEAN,
+      field: "is_recommend_password_change",
+      defaultValue: false,
+    },
   },
   {
     tableName: "users",

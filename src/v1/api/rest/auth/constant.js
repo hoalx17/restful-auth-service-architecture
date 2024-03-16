@@ -77,6 +77,8 @@ module.exports = {
     CHANGE_PROFILE_PASSWORD_FAILURE: "ERR_AUTH_SERVICE_34",
     OAUTH_SIGN_IN_FAILURE: "ERR_AUTH_SERVICE_35",
     GOOGLE_SIGN_IN_FAILURE: "ERR_AUTH_SERVICE_36",
+    ENSURE_NOT_DANGEROUS_SESSION_FAILURE: "ERR_AUTH_SERVICE_37",
+    DANGEROUS_SESSION_DETECT: "ERR_AUTH_SERVICE_38",
 
     /** Token */
     SIGN_TOKEN_FAILURE: "ERR_AUTH_TOKEN_1",
@@ -183,6 +185,8 @@ module.exports = {
     OAUTH_SIGN_IN_SUCCESS: "Sign in with OAuth success!",
     GOOGLE_SIGN_IN_FAILURE: "Sign in with Google OAuth failure!",
     GOOGLE_SIGN_IN_SUCCESS: "Sign in with Google OAuth success!",
+    ENSURE_NOT_DANGEROUS_SESSION_FAILURE: "Ensure not dangerous session failure!",
+    DANGEROUS_SESSION_DETECT: "Dangerous session detect, recommend to change your profile password!",
 
     /** Token */
     SIGN_TOKEN_FAILURE: "Sign a token failure!",
@@ -211,6 +215,7 @@ module.exports = {
     REFRESH_TOKEN_NOT_MATCH: "refresh token not match",
     PASSWORD_OR_NEW_PASSWORD_MUST_NOT_EMPTY: "password, or new password must not empty",
     NEW_PASSWORD_MUST_NOT_EMPTY: "new password must not be empty",
+    DANGEROUS_SESSION_DETECT: "dangerous session detect",
   },
 
   SCHEMA: {

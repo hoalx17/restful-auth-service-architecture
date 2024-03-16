@@ -6,8 +6,9 @@ const { ON_RELEASE } = require("../../../../../constant");
 const { throwCriticalError, createCriticalError, newServerError } = require("../../../error");
 const { CODE, MSG, ERR } = require("./constant");
 const { core, util } = require("./service");
-const { User } = require("./model");
+const { User, UserVerifySignature } = require("./model");
 const { getTokenFromHeader, verifyToken } = require("./token");
+const { Op } = require("sequelize");
 
 const { JWT_ACCESS_TOKEN_SECRET } = process.env;
 
